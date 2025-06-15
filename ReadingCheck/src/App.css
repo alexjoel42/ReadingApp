@@ -1,0 +1,533 @@
+/* src/App.css */
+:root {
+  --primary: #4361ee;
+  --secondary: #3f37c9;
+  --success: #4cc9f0;
+  --danger: #f72585;
+  --warning: #f8961e;
+  --info: #4895ef;
+  --light: #f8f9fa;
+  --dark: #212529;
+  --text: #212529;
+  --background: #ffffff;
+  --table-header-bg: var(--secondary);
+  --table-header-text: #ffffff;
+  --table-row-hover-bg: #f5f5f5;
+  --table-border-color: #ddd;
+}
+
+/* Reset and Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, 
+              Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #f5f7fa;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* App Container */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Styles */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-logo {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+
+.teacher-link {
+  color: white;
+  padding: 0.5rem 1rem;
+  border: 1px solid white;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.teacher-link:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.student-badge {
+  background: white;
+  color: var(--primary);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* Main Content Area */
+.main-content {
+  margin-top: 70px; /* Account for fixed header */
+  padding: 2rem;
+  flex: 1;
+}
+
+/* Dashboard Styles */
+.dashboard {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  padding: 2rem;
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  border-top: 4px solid var(--primary);
+}
+
+.stat-card h3 {
+  margin-top: 0;
+  color: var(--secondary);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card .stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+  color: var(--dark);
+}
+
+.stat-card .stat-label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* Table Styles */
+.student-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.student-table thead {
+  background-color: var(--table-header-bg);
+  color: var(--table-header-text);
+}
+
+.student-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.student-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--table-border-color);
+  vertical-align: top;
+}
+
+.student-table tr:not(:last-child) td {
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+.student-table tr:nth-child(even) {
+  background-color: var(--light);
+}
+
+.student-table tr:hover {
+  background-color: var(--table-row-hover-bg);
+}
+
+.student-table .delete-btn {
+  background-color: var(--danger);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.student-table .delete-btn:hover {
+  background-color: #d11a4a;
+  transform: translateY(-1px);
+}
+
+.student-table td[data-accuracy] {
+  font-weight: 500;
+}
+
+.student-table td[data-accuracy="low"] {
+  color: var(--danger);
+}
+
+.student-table td[data-accuracy="medium"] {
+  color: var(--warning);
+}
+
+.student-table td[data-accuracy="high"] {
+  color: var(--success);
+}
+
+/* Problem words display */
+.problem-words {
+  background: #fff8e1;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  border-left: 4px solid var(--warning);
+}
+
+.problem-words h4 {
+  margin-top: 0;
+  color: var(--warning);
+}
+
+.problem-words-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.problem-word-tag {
+  background: #ffe0b2;
+  color: #e65100;
+  padding: 0.3rem 0.8rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+}
+
+/* Student Login Form */
+.student-form-container {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.student-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.student-form label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.student-form input {
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.student-form button {
+  background: var(--primary);
+  color: white;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.student-form button:hover {
+  background: var(--secondary);
+}
+
+/* Practice Interface */
+.practice-interface {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.phrase-card {
+  background: var(--light);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border-left: 4px solid var(--primary);
+}
+
+.target-phrase {
+  font-size: 1.5rem;
+  margin: 1rem 0;
+  line-height: 1.4;
+}
+
+.difficulty {
+  font-weight: bold;
+  color: var(--secondary);
+}
+
+.sight-words {
+  margin-top: 1rem;
+}
+
+.sight-word-tag {
+  display: inline-block;
+  background: var(--info);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 1rem;
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Recording Controls */
+.recording-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.record-button, .stop-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.record-button {
+  background: var(--primary);
+  color: white;
+}
+
+.record-button.recording {
+  background: var(--danger);
+}
+
+.stop-button {
+  background: var(--danger);
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.timer {
+  margin-bottom: 1rem;
+  font-weight: bold;
+  color: var(--dark);
+}
+
+/* Attempt Results */
+.attempt-result {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--light);
+  border-radius: 8px;
+}
+
+.analysis-results {
+  margin-top: 1.5rem;
+}
+
+.feedback {
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.score-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.score-meter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.meter-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meter-fill {
+  height: 20px;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.meter-fill.overall {
+  background: var(--success);
+}
+
+.meter-fill.sight-words {
+  background: var(--info);
+}
+
+.meter-fill.phonetics {
+  background: var(--warning);
+}
+
+.error-details {
+  margin-top: 1.5rem;
+}
+
+.missing-words, .mispronounced-words {
+  margin-bottom: 1rem;
+}
+
+.error-word {
+  display: inline-block;
+  background: #ffebee;
+  color: var(--danger);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+}
+
+.mispronounced-words ul {
+  list-style: none;
+  padding: 0;
+}
+
+.mispronounced-words li {
+  margin-bottom: 0.5rem;
+}
+
+.attempted {
+  color: var(--danger);
+  font-style: italic;
+}
+
+/* Navigation */
+.navigation {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.next-button {
+  background: var(--primary);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.next-button:hover {
+  background: var(--secondary);
+}
+
+/* Error Message */
+.error {
+  text-align: center;
+  padding: 2rem;
+  color: var(--danger);
+  font-weight: bold;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .practice-interface, .student-form-container {
+    padding: 1.5rem;
+  }
+  
+  .recording-controls {
+    flex-direction: column;
+  }
+  
+  .score-meter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .student-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .student-table th, 
+  .student-table td {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .student-badge {
+    margin-top: 0.5rem;
+  }
+}
