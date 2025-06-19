@@ -112,7 +112,6 @@ const App: React.FC = () => {
                 <div className="phrase-card">
                   <h2>Phrase {currentPhraseIndex + 1} of {PHRASES.length}</h2>
                   <p className="target-phrase">"{PHRASES[currentPhraseIndex].text}"</p>
-                  <p className="difficulty">Difficulty: {PHRASES[currentPhraseIndex].difficulty}</p>
                   
                   {/* NEW: Display sight words for the phrase */}
                   {PHRASES[currentPhraseIndex].sightWords.length > 0 && (

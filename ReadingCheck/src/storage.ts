@@ -3,84 +3,68 @@ import type { Attempt } from './model';
 import { PHRASES } from './constants/phrases';
 
 const APP_VERSION = 2;
-const STORAGE_KEY = `speechApp_attempts_v${APP_VERSION}`;
+const STORAGE_KEY = `readingApp_attempts_v${APP_VERSION}`;
 
-// Generate sample attempts
-const generateSampleAttempt = (studentId: string, phraseIndex: number): Attempt => {
-  const phrase = PHRASES[phraseIndex];
-  const accuracy = 70 + Math.floor(Math.random() * 30); // 70-100%
-  const sightWordScore = 60 + Math.floor(Math.random() * 40); // 60-100%
-  const phoneticScore = 50 + Math.floor(Math.random() * 50); // 50-100%
+/**
+ * Creates a single sample attempt with realistic data
+ * for demonstration purposes
+ */
+const createSampleAttempt = (): Attempt => {
+  // Use the first phrase from PHRASES
+  const samplePhrase = PHRASES[0]; 
   
   return {
     id: crypto.randomUUID(),
-    studentId,
-    phraseId: phrase.id,
-    timestamp: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)), // Last 7 days
-    durationMs: 3000 + Math.floor(Math.random() * 7000), // 3-10 seconds
-    targetPhrase: phrase.text,
-    attemptedPhrase: phrase.text.split(' ').map(word => 
-      Math.random() > 0.2 ? word : word.slice(0, -1) + 'x' // Simulate some errors
-    ).join(' '),
-    accuracy,
-    sightWordScore,
-    phoneticScore,
-    feedback: accuracy > 85 ? 'Good job!' : 'Needs practice',
+    studentId: 'Demo_Student',
+    phraseId: samplePhrase.id,
+    timestamp: new Date(), // Current time
+    durationMs: 4500, // 4.5 seconds
+    targetPhrase: samplePhrase.text,
+    attemptedPhrase: samplePhrase.text, // Perfect attempt
+    accuracy: 88,
+    sightWordScore: 92,
+    phoneticScore: 85,
+    feedback: 'Good fluency, watch vowel sounds',
     details: {
-      missingWords: Math.random() > 0.8 ? [phrase.text.split(' ')[0]] : [],
+      missingWords: [],
       extraWords: [],
-      mispronouncedWords: Math.random() > 0.7 ? [
-        { 
-          word: phrase.text.split(' ')[1], 
-          attempted: phrase.text.split(' ')[1] + 'x' 
-        }
-      ] : [],
-      sightWordAccuracy: phrase.sightWords.reduce((acc, word) => ({
+      mispronouncedWords: [
+        { word: "that", attempted: "dat" } // One common error
+      ],
+      sightWordAccuracy: samplePhrase.sightWords.reduce((acc, word) => ({
         ...acc,
-        [word]: Math.random() > 0.3
+        [word]: word !== "that" // Mark "that" as incorrect
       }), {}),
-      phoneticPatternAccuracy: phrase.phoneticPatterns?.reduce((acc, pattern) => ({
-        ...acc,
-        [pattern]: Math.random() > 0.4
-      }), {}) || {}
+      phoneticPatternAccuracy: {
+        "th": false, // Got the "th" sound wrong
+        "sh": true   // Got the "sh" sound right
+      }
     }
   };
 };
 
-// Initialize with sample data if empty
+/**
+ * Initialize storage with exactly one sample attempt
+ */
 const initializeSampleData = (): Attempt[] => {
-  const sampleStudents = ['alice123', 'bob456', 'charlie789'];
-  const attempts: Attempt[] = [];
-  
-  sampleStudents.forEach(student => {
-    PHRASES.forEach((_, index) => {
-      attempts.push(generateSampleAttempt(student, index));
-      if (Math.random() > 0.5) { // Add some extra attempts
-        attempts.push(generateSampleAttempt(student, index));
-      }
-    });
-  });
-  
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
-  return attempts;
+  const sampleAttempt = createSampleAttempt();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([sampleAttempt]));
+  return [sampleAttempt];
 };
 
 export const getAttemptHistory = (): Attempt[] => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     
-    // Initialize with sample data if empty (development only)
-    if (!data) {
-      if (process.env.NODE_ENV === 'development') {
-        return initializeSampleData();
-      }
-      return [];
+    // Only initialize sample data in development mode when empty
+    if (!data && process.env.NODE_ENV === 'development') {
+      return initializeSampleData();
     }
     
-    return JSON.parse(data).map((item: any) => ({
+    return data ? JSON.parse(data).map((item: any) => ({
       ...item,
-      timestamp: new Date(item.timestamp)
-    }));
+      timestamp: new Date(item.timestamp) // Ensure proper Date objects
+    })) : [];
   } catch (error) {
     console.error('Failed to parse attempt history', error);
     return [];
@@ -92,7 +76,7 @@ export const saveAttempt = (attempt: Omit<Attempt, 'id'>): Attempt => {
   const newAttempt: Attempt = {
     ...attempt,
     id: crypto.randomUUID(),
-    timestamp: new Date(attempt.timestamp)
+    timestamp: new Date(attempt.timestamp) // Ensure proper Date object
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify([newAttempt, ...history]));
   return newAttempt;
@@ -110,7 +94,7 @@ export const deleteStudentAttempts = (studentId: string): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
 };
 
-export const clearHistory = (): void => {
+export const clearAllAttempts = (): void => {
   localStorage.removeItem(STORAGE_KEY);
 };
 
@@ -118,4 +102,12 @@ export const getAttemptsByStudent = (studentId: string): Attempt[] => {
   return getAttemptHistory()
     .filter(a => a.studentId === studentId)
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+};
+
+// Type guard for Attempt
+const isAttempt = (obj: any): obj is Attempt => {
+  return obj && 
+    typeof obj.id === 'string' &&
+    typeof obj.studentId === 'string' &&
+    obj.timestamp instanceof Date;
 };

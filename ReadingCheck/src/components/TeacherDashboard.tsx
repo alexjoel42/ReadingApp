@@ -1,81 +1,54 @@
-// src/components/TeacherDashboard.tsx
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import HistoryTable from './HistoryTable';
+import HistoryTable_Overview from './HistoryTableOverview';
 import { deleteAttempt, deleteStudentAttempts } from '../storage';
 import { PHRASES } from '../constants/phrases';
 import type { Attempt, TeacherDashboardProps } from '../model';
 import { STORAGE_KEY } from '../model';
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ attempts, onAttemptsUpdate }) => {
+const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ 
+  attempts, 
+  onAttemptsUpdate 
+}) => {
   const students = [...new Set(attempts.map(a => a.studentId))];
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
 
-  // Analytics calculations
+ 
+  // PROPERLY CALCULATED ANALYTICS
   const { averageAccuracy, sightWordMastery, phoneticMastery } = useMemo(() => {
     const filteredAttempts = selectedStudent 
       ? attempts.filter(a => a.studentId === selectedStudent)
       : attempts;
 
+
     if (filteredAttempts.length === 0) {
-      return {
-        averageAccuracy: 0,
-        sightWordMastery: 0,
-        phoneticMastery: 0
-      };
+      return { averageAccuracy: 0, sightWordMastery: 0, phoneticMastery: 0 };
     }
 
+ // Calculate PROPER averages (sum of percentages / count)
     const accuracySum = filteredAttempts.reduce((sum, a) => sum + a.accuracy, 0);
     const sightWordSum = filteredAttempts.reduce((sum, a) => sum + (a.sightWordScore || 0), 0);
     const phoneticSum = filteredAttempts.reduce((sum, a) => sum + (a.phoneticScore || 0), 0);
-
+    const count = filteredAttempts.length;
     return {
-      averageAccuracy: (accuracySum / filteredAttempts.length) * 100,
-      sightWordMastery: (sightWordSum / filteredAttempts.length),
-      phoneticMastery: (phoneticSum / filteredAttempts.length)
+      averageAccuracy: accuracySum/count,
+      sightWordMastery: sightWordSum/count,
+      phoneticMastery: phoneticSum/count
     };
   }, [attempts, selectedStudent]);
-
-  // Problematic words calculation
-  const problematicSightWords = useMemo(() => {
-    const wordMap = new Map<string, { correct: number; total: number }>();
-    
-    attempts.forEach(attempt => {
-      if (attempt.details?.sightWordAccuracy) {
-        Object.entries(attempt.details.sightWordAccuracy).forEach(([word, correct]) => {
-          const entry = wordMap.get(word) || { correct: 0, total: 0 };
-          entry.correct += correct ? 1 : 0;
-          entry.total += 1;
-          wordMap.set(word, entry);
-        });
-      }
-    });
-
-    return Array.from(wordMap.entries())
-      .filter(([_, { correct, total }]) => correct / total < 0.7)
-      .map(([word]) => word);
-  }, [attempts]);
-
-  // Delete handlers
-  const handleDeleteAttempt = (attemptId: string) => {
-    if (window.confirm('Are you sure you want to delete this attempt?')) {
-      deleteAttempt(attemptId);
-      onAttemptsUpdate();
-    }
-  };
-
-  const handleDeleteStudent = (studentId: string) => {
-    if (window.confirm(`Delete ALL attempts for student ${studentId}? This cannot be undone.`)) {
-      deleteStudentAttempts(studentId);
-      onAttemptsUpdate();
-      setSelectedStudent(null);
-    }
-  };
-
-  // Sample data handler
-  const handleAddSampleData = () => {
-    if (window.confirm('Generate sample student data? This will add fake attempts to localStorage.')) {
-      localStorage.removeItem(STORAGE_KEY);
+  const handleDeleteSession = (sessionId: string) => {
+    if (window.confirm('Delete this entire practice session?')) {
+      const [studentId, dateStr] = sessionId.split('-');
+      const date = new Date(dateStr);
+      
+      attempts
+        .filter(a => 
+          a.studentId === studentId && 
+          new Date(a.timestamp).toDateString() === date.toDateString()
+        )
+        .forEach(a => deleteAttempt(a.id));
+      
       onAttemptsUpdate();
     }
   };
@@ -84,9 +57,27 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ attempts, onAttempt
     <div className="dashboard">
       <div className="dashboard-header">
         <h2>Class Progress</h2>
-        <Link to="/" className="back-button">
-          Back to Practice
-        </Link>
+        <div className="dashboard-controls">
+          <Link to="/" className="back-button">
+            Back to Practice
+          </Link>
+          {attempts.length > 0 && (
+            <div className="view-toggle">
+              <button
+                className={viewMode === 'overview' ? 'active' : ''}
+                onClick={() => setViewMode('overview')}
+              >
+                Overview
+              </button>
+              <button
+                className={viewMode === 'detailed' ? 'active' : ''}
+                onClick={() => setViewMode('detailed')}
+              >
+                Details
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {attempts.length === 0 ? (
@@ -95,7 +86,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ attempts, onAttempt
           <p>Students need to complete practice sessions to see data here.</p>
           {process.env.NODE_ENV === 'development' && (
             <button 
-              onClick={handleAddSampleData}
+              onClick={() => {
+                localStorage.removeItem(STORAGE_KEY);
+                onAttemptsUpdate();
+              }}
               className="sample-data-button"
             >
               Generate Sample Data (Dev Only)
@@ -106,43 +100,27 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ attempts, onAttempt
         <>
           <div className="stats-overview">
             <div className="stat-card">
-              <h3>Total Students</h3>
+              <h3>Students</h3>
               <p>{students.length}</p>
-            </div>
-            <div className="stat-card">
-              <h3>Total Attempts</h3>
-              <p>{attempts.length}</p>
             </div>
             <div className="stat-card">
               <h3>Avg. Accuracy</h3>
               <p>{averageAccuracy.toFixed(1)}%</p>
             </div>
             <div className="stat-card">
-              <h3>Sight Word Mastery</h3>
-              <p>{(sightWordMastery * 100).toFixed(1)}%</p>
+              <h3>Sight Words</h3>
+              <p>{(sightWordMastery).toFixed(1)}%</p>
             </div>
             <div className="stat-card">
-              <h3>Phonetic Mastery</h3>
-              <p>{(phoneticMastery * 100).toFixed(1)}%</p>
+              <h3>Phonetics</h3>
+              <p>{(phoneticMastery).toFixed(1)}%</p>
             </div>
           </div>
-
-          {problematicSightWords.length > 0 && (
-            <div className="problem-words">
-              <h3>Common Problem Words:</h3>
-              <div className="word-tags">
-                {problematicSightWords.map(word => (
-                  <span key={word} className="word-tag">{word}</span>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="student-filter">
             <select
               value={selectedStudent || ''}
               onChange={(e) => setSelectedStudent(e.target.value || null)}
-              aria-label="Filter by student"
             >
               <option value="">All Students</option>
               {students.map(student => (
@@ -151,26 +129,26 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ attempts, onAttempt
                 </option>
               ))}
             </select>
-            {selectedStudent && (
-              <button 
-                onClick={() => handleDeleteStudent(selectedStudent)}
-                className="delete-student-button"
-              >
-                Delete All for {selectedStudent}
-              </button>
-            )}
           </div>
 
-          <div className="detailed-results">
-            <HistoryTable 
-              attempts={selectedStudent 
-                ? attempts.filter(a => a.studentId === selectedStudent)
-                : attempts
-              }
-              phrases={PHRASES}
-              showStudentColumn={!selectedStudent}
-              onDeleteAttempt={handleDeleteAttempt}
-            />
+          <div className="results-container">
+            {viewMode === 'overview' ? (
+              <HistoryTable_Overview 
+                attempts={selectedStudent 
+                  ? attempts.filter(a => a.studentId === selectedStudent)
+                  : attempts
+                }
+                onDeleteSession={handleDeleteSession}
+              />
+            ) : (
+              <div className="detailed-results">
+                {/* Keep your existing table as fallback or remove */}
+                <p className="mode-notice">
+                  Detailed table view would go here. Consider using HistoryTable_Details
+                  for phonetic pattern analysis.
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}

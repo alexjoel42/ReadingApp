@@ -531,3 +531,105 @@ button:disabled {
     margin-top: 0.5rem;
   }
 }
+
+/* Phonetic-specific styles */
+.phonetic-insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.insight {
+  display: flex;
+  justify-content: space-between;
+}
+
+.insight .value {
+  font-weight: bold;
+}
+
+.insight .value.low {
+  color: var(--danger);
+}
+
+.phonetic-analysis-details {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.attempts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.attempt-card {
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border-left: 4px solid var(--primary);
+}
+
+.attempt-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.attempt-header .accuracy {
+  font-weight: bold;
+}
+
+.attempt-header .accuracy.low {
+  color: var(--danger);
+}
+
+.analysis-section {
+  margin: 0.5rem 0;
+}
+
+.analysis-section h5 {
+  margin: 0.5rem 0;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.analysis-section.error {
+  color: var(--danger);
+}
+
+.analysis-section.error .target {
+  font-weight: bold;
+}
+
+.analysis-section.error .attempted {
+  font-style: italic;
+}
+
+.attempt-footer {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .phonetic-insights {
+    grid-template-columns: 1fr;
+  }
+  
+  .attempts-grid {
+    grid-template-columns: 1fr;
+  }
+}
