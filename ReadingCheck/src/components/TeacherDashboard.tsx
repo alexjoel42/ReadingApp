@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import HistoryTable_Overview from './HistoryTableOverview';
 import { deleteAttempt, deleteStudentAttempts } from '../storage';
-import { PHRASES } from '../constants/phrases';
+// import { PhraseSet } from '../constants/phrases';
 import type { Attempt, TeacherDashboardProps } from '../model';
 import { STORAGE_KEY } from '../model';
 
@@ -23,7 +23,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
 
     if (filteredAttempts.length === 0) {
-      return { averageAccuracy: 0, sightWordMastery: 0, phoneticMastery: 0 };
+      return { averageAccuracy: 0, sightWordMastery: 0, phoneticMastery: 0 };    
     }
 
  // Calculate PROPER averages (sum of percentages / count)

@@ -1,50 +1,48 @@
 // src/storage.ts
 import type { Attempt } from './model';
-import { PHRASES } from './constants/phrases';
+import { PHRASE_SETS, type Phrase } from './constants/phrases';
 
 const APP_VERSION = 2;
 const STORAGE_KEY = `readingApp_attempts_v${APP_VERSION}`;
 
 /**
  * Creates a single sample attempt with realistic data
- * for demonstration purposes
  */
 const createSampleAttempt = (): Attempt => {
-  // Use the first phrase from PHRASES
-  const samplePhrase = PHRASES[0]; 
+  const samplePhrase = PHRASE_SETS[0].phrases[0];
   
   return {
     id: crypto.randomUUID(),
     studentId: 'Demo_Student',
     phraseId: samplePhrase.id,
-    timestamp: new Date(), // Current time
-    durationMs: 4500, // 4.5 seconds
+    timestamp: new Date(),
+    durationMs: 4500,
     targetPhrase: samplePhrase.text,
-    attemptedPhrase: samplePhrase.text, // Perfect attempt
+    attemptedPhrase: samplePhrase.text.replace("strong", "stong"), // Intentional error
     accuracy: 88,
     sightWordScore: 92,
     phoneticScore: 85,
-    feedback: 'Good fluency, watch vowel sounds',
+    feedback: 'Good fluency, watch "str" blends',
     details: {
       missingWords: [],
       extraWords: [],
       mispronouncedWords: [
-        { word: "that", attempted: "dat" } // One common error
+        { word: "strong", attempted: "stong" }
       ],
       sightWordAccuracy: samplePhrase.sightWords.reduce((acc, word) => ({
         ...acc,
-        [word]: word !== "that" // Mark "that" as incorrect
+        [word]: true // All sight words correct
       }), {}),
       phoneticPatternAccuracy: {
-        "th": false, // Got the "th" sound wrong
-        "sh": true   // Got the "sh" sound right
+        "str": false, // Got the "str" blend wrong
+        "ng": true    // Got the "ng" ending right
       }
     }
   };
 };
 
 /**
- * Initialize storage with exactly one sample attempt
+ * Initialize storage with sample data
  */
 const initializeSampleData = (): Attempt[] => {
   const sampleAttempt = createSampleAttempt();
@@ -56,14 +54,13 @@ export const getAttemptHistory = (): Attempt[] => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     
-    // Only initialize sample data in development mode when empty
     if (!data && process.env.NODE_ENV === 'development') {
       return initializeSampleData();
     }
     
     return data ? JSON.parse(data).map((item: any) => ({
       ...item,
-      timestamp: new Date(item.timestamp) // Ensure proper Date objects
+      timestamp: new Date(item.timestamp)
     })) : [];
   } catch (error) {
     console.error('Failed to parse attempt history', error);
@@ -76,7 +73,7 @@ export const saveAttempt = (attempt: Omit<Attempt, 'id'>): Attempt => {
   const newAttempt: Attempt = {
     ...attempt,
     id: crypto.randomUUID(),
-    timestamp: new Date(attempt.timestamp) // Ensure proper Date object
+    timestamp: new Date(attempt.timestamp)
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify([newAttempt, ...history]));
   return newAttempt;
@@ -88,14 +85,11 @@ export const deleteAttempt = (attemptId: string): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
 };
 
+// Add this function to your existing storage.ts file
 export const deleteStudentAttempts = (studentId: string): void => {
   const history = getAttemptHistory();
   const updatedHistory = history.filter(attempt => attempt.studentId !== studentId);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
-};
-
-export const clearAllAttempts = (): void => {
-  localStorage.removeItem(STORAGE_KEY);
 };
 
 export const getAttemptsByStudent = (studentId: string): Attempt[] => {
@@ -104,10 +98,71 @@ export const getAttemptsByStudent = (studentId: string): Attempt[] => {
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 };
 
-// Type guard for Attempt
-const isAttempt = (obj: any): obj is Attempt => {
-  return obj && 
-    typeof obj.id === 'string' &&
-    typeof obj.studentId === 'string' &&
-    obj.timestamp instanceof Date;
+interface StudentProgress {
+  currentSet: number;
+  completedPhrases: {
+    [phraseId: string]: {
+      attempts: number;
+      lastAccuracy: number;
+      mastered: boolean;
+    };
+  };
+}
+
+export const getStudentProgress = (studentId: string): StudentProgress => {
+  const data = localStorage.getItem(`progress_${studentId}`);
+  return data ? JSON.parse(data) : { 
+    currentSet: 0, 
+    completedPhrases: {} 
+  };
+};
+
+export const saveStudentProgress = (
+  studentId: string, 
+  progress: StudentProgress
+) => {
+  localStorage.setItem(`progress_${studentId}`, JSON.stringify(progress));
+};
+
+export const recordAttempt = (
+  studentId: string,
+  phraseId: string,
+  accuracy: number
+) => {
+  const progress = getStudentProgress(studentId);
+  
+  // Update phrase record
+  if (!progress.completedPhrases[phraseId]) {
+    progress.completedPhrases[phraseId] = {
+      attempts: 0,
+      lastAccuracy: 0,
+      mastered: false
+    };
+  }
+  
+  const phraseRecord = progress.completedPhrases[phraseId];
+  phraseRecord.attempts++;
+  phraseRecord.lastAccuracy = accuracy;
+  phraseRecord.mastered = accuracy >= 90;
+  
+  // Advance set if 80% of phrases mastered
+  const currentPhrases = PHRASE_SETS[progress.currentSet].phrases;
+  const masteredCount = currentPhrases.filter(p => 
+    progress.completedPhrases[p.id]?.mastered
+  ).length;
+  
+  if (masteredCount / currentPhrases.length >= 0.8) {
+    progress.currentSet = Math.min(progress.currentSet + 1, PHRASE_SETS.length - 1);
+  }
+  
+  saveStudentProgress(studentId, progress);
+};
+
+// Utility function to find phrase by ID
+export const getPhraseById = (phraseId: string): Phrase | undefined => {
+  for (const set of PHRASE_SETS) {
+    const phrase = set.phrases.find(p => p.id === phraseId);
+    if (phrase) return phrase;
+  }
+  return undefined;
 };

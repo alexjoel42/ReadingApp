@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { saveAttempt, getAttemptHistory } from './storage';
+import { saveAttempt, getAttemptHistory, getStudentProgress, recordAttempt } from './storage';
 import StudentIdForm from './components/StudentIdForm';
 import TeacherDashboard from './components/TeacherDashboard';
 import type { Attempt } from './model';
 import './App.css';
-import { PHRASES } from './constants/phrases';
+import { PHRASE_SETS } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 
 const App: React.FC = () => {
@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [completedPhrases, setCompletedPhrases] = useState<Set<string>>(new Set());
   const [lastEvaluation, setLastEvaluation] = useState<ReturnType<typeof evaluatePronunciation> | null>(null);
+  const [currentPhrases, setCurrentPhrases] = useState<Phrase[]>([]);
 
   const {
     transcript,
@@ -29,8 +30,28 @@ const App: React.FC = () => {
     setAttempts(getAttemptHistory());
   }, []);
 
+  const getAssessmentSet = (studentId: string) => {
+    const progress = getStudentProgress(studentId);
+    const currentSet = PHRASE_SETS[progress.currentSet].phrases;
+    
+    return [...currentSet]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 10);
+  };
+
+  useEffect(() => {
+    if (studentId) {
+      const phrases = getAssessmentSet(studentId);
+      setCurrentPhrases(phrases);
+      setCurrentPhraseIndex(0);
+      setCompletedPhrases(new Set());
+      resetTranscript();
+      setLastEvaluation(null);
+    }
+  }, [studentId]);
+
   const handleStartRecording = () => {
-    if (!studentId) return;
+    if (!studentId || currentPhrases.length === 0 || listening) return;
     resetTranscript();
     setLastEvaluation(null);
     setStartTime(Date.now());
@@ -38,13 +59,12 @@ const App: React.FC = () => {
   };
 
   const handleStopRecording = () => {
-    if (!startTime || !studentId) return;
+    if (!startTime || !studentId || currentPhrases.length === 0 || !listening) return;
 
     SpeechRecognition.stopListening();
     const durationMs = Date.now() - startTime;
-    const currentPhrase = PHRASES[currentPhraseIndex];
+    const currentPhrase = currentPhrases[currentPhraseIndex];
 
-    // NEW: Use the full phrase object for evaluation
     const evaluation = evaluatePronunciation(currentPhrase, transcript);
     setLastEvaluation(evaluation);
 
@@ -55,35 +75,35 @@ const App: React.FC = () => {
       durationMs,
       targetPhrase: currentPhrase.text,
       attemptedPhrase: transcript,
-      accuracy: evaluation.score.overall, // Use overall score from evaluation
-      sightWordScore: evaluation.score.sightWords, // NEW: Track sight word score
-      phoneticScore: evaluation.score.phoneticPatterns, // NEW: Track phonetic score
+      accuracy: evaluation.score.overall,
+      sightWordScore: evaluation.score.sightWords,
+      phoneticScore: evaluation.score.phoneticPatterns,
       feedback: evaluation.feedback,
-      details: evaluation.details // NEW: Include all analysis details
-      ,
-      id: ''
+      details: evaluation.details,
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
 
     saveAttempt(newAttempt);
+    recordAttempt(studentId, currentPhrase.id, evaluation.score.overall);
     setAttempts(prev => [newAttempt, ...prev]);
     setStartTime(null);
   };
 
   const handleNextPhrase = () => {
-    const updatedCompleted = new Set(completedPhrases).add(PHRASES[currentPhraseIndex].id);
+    if (currentPhrases.length === 0 || listening) return;
+    
+    const updatedCompleted = new Set(completedPhrases).add(currentPhrases[currentPhraseIndex].id);
     setCompletedPhrases(updatedCompleted);
 
-    if (updatedCompleted.size >= PHRASES.length) {
+    if (updatedCompleted.size >= currentPhrases.length) {
       setStudentId(null);
-      setCurrentPhraseIndex(0);
-      setCompletedPhrases(new Set());
       return;
     }
 
     let nextIndex = currentPhraseIndex;
     do {
-      nextIndex = (nextIndex + 1) % PHRASES.length;
-    } while (updatedCompleted.has(PHRASES[nextIndex].id));
+      nextIndex = (nextIndex + 1) % currentPhrases.length;
+    } while (updatedCompleted.has(currentPhrases[nextIndex].id));
 
     setCurrentPhraseIndex(nextIndex);
     resetTranscript();
@@ -91,14 +111,14 @@ const App: React.FC = () => {
   };
 
   if (!browserSupportsSpeechRecognition) {
-    return <div className="error">Browser not supported</div>;
+    return <div className="error">Your browser doesn't support speech recognition.</div>;
   }
 
   return (
     <Router>
       <div className="app">
         <header className="app-header">
-          <Link to="/" className="app-logo">Speech Coach</Link>
+          <Link to="/" className="app-logo">Reading Coach</Link>
           <Link to="/history" className="teacher-link">Teacher Dashboard</Link>
           {studentId && <span className="student-badge">Student: {studentId}</span>}
         </header>
@@ -107,21 +127,20 @@ const App: React.FC = () => {
           <Route path="/" element={
             !studentId ? (
               <StudentIdForm onStudentIdSet={setStudentId} />
-            ) : (
+            ) : currentPhrases.length > 0 ? (
               <div className="practice-interface">
                 <div className="phrase-card">
-                  <h2>Phrase {currentPhraseIndex + 1} of {PHRASES.length}</h2>
-                  <p className="target-phrase">"{PHRASES[currentPhraseIndex].text}"</p>
+                  <h2>Phrase {currentPhraseIndex + 1} of {currentPhrases.length}</h2>
+                  <p className="target-phrase">"{currentPhrases[currentPhraseIndex].text}"</p>
                   
-                  {/* NEW: Display sight words for the phrase */}
-                  {PHRASES[currentPhraseIndex].sightWords.length > 0 && (
+                  {currentPhrases[currentPhraseIndex].sightWords?.length > 0 && (
                     <div className="sight-words">
                       <span>Sight Words: </span>
-                      {PHRASES[currentPhraseIndex].sightWords.map((word, i) => (
+                      {currentPhrases[currentPhraseIndex].sightWords.map((word, i) => (
                         <span key={i} className="sight-word-tag">
                           {word}
-                          {i < PHRASES[currentPhraseIndex].sightWords.length - 1 ? ' ' : ''}
-                          </span>
+                          {i < currentPhrases[currentPhraseIndex].sightWords.length - 1 ? ' ' : ''}
+                        </span>
                       ))}
                     </div>
                   )}
@@ -133,7 +152,11 @@ const App: React.FC = () => {
                     disabled={listening}
                     className={`record-button ${listening ? 'recording' : ''}`}
                   >
-                    {listening ? '● Recording...' : 'Start Recording'}
+                    {listening ? (
+                      <>
+                        <span className="pulse-dot">●</span> Recording...
+                      </>
+                    ) : 'Start Recording'}
                   </button>
                   <button
                     onClick={handleStopRecording}
@@ -146,30 +169,29 @@ const App: React.FC = () => {
 
                 {listening && startTime && (
                   <div className="timer">
-                    Time: {((Date.now() - startTime) / 1000).toFixed(1)}s
+                    Recording: {((Date.now() - startTime) / 1000).toFixed(1)}s
                   </div>
                 )}
 
                 {transcript && (
                   <div className="attempt-result">
                     <h3>Your attempt:</h3>
-                    <p>"{transcript}"</p>
+                    <p className="attempted-phrase">"{transcript}"</p>
                     
                     {lastEvaluation && (
                       <div className="analysis-results">
                         <h4>Analysis:</h4>
-                        <p className="feedback">{lastEvaluation.feedback}</p>
+                        <div className="feedback-message">{lastEvaluation.feedback}</div>
                         
-                        {/* Enhanced accuracy display */}
                         <div className="score-breakdown">
                           <div className="score-meter">
-                            <span>Overall: </span>
+                            <span>Overall Accuracy: </span>
                             <div className="meter-container">
                               <div 
                                 className="meter-fill overall" 
                                 style={{ width: `${lastEvaluation.score.overall}%` }}
                               />
-                              <span>{lastEvaluation.score.overall}%</span>
+                              <span className="score-value">{lastEvaluation.score.overall}%</span>
                             </div>
                           </div>
                           
@@ -180,7 +202,7 @@ const App: React.FC = () => {
                                 className="meter-fill sight-words" 
                                 style={{ width: `${lastEvaluation.score.sightWords}%` }}
                               />
-                              <span>{lastEvaluation.score.sightWords}%</span>
+                              <span className="score-value">{lastEvaluation.score.sightWords}%</span>
                             </div>
                           </div>
                           
@@ -191,61 +213,61 @@ const App: React.FC = () => {
                                 className="meter-fill phonetics" 
                                 style={{ width: `${lastEvaluation.score.phoneticPatterns}%` }}
                               />
-                              <span>{lastEvaluation.score.phoneticPatterns}%</span>
+                              <span className="score-value">{lastEvaluation.score.phoneticPatterns}%</span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Enhanced error details */}
-                        <div className="error-details">
-                          {lastEvaluation.details.missingWords.length > 0 && (
-                            <div className="missing-words">
-                              <h5>Missing Words:</h5>
-                              <div>
-                                {lastEvaluation.details.missingWords.map((word, i) => (
-                                  <span key={i} className="error-word">{word}</span>
-                                ))}
-                              </div>
+                        {lastEvaluation.details.missingWords.length > 0 && (
+                          <div className="error-section missing-words">
+                            <h5>Missing Words:</h5>
+                            <div className="word-list">
+                              {lastEvaluation.details.missingWords.map((word, i) => (
+                                <span key={i} className="error-word">{word}</span>
+                              ))}
                             </div>
-                          )}
-                          
-                          {lastEvaluation.details.mispronouncedWords.length > 0 && (
-                            <div className="mispronounced-words">
-                              <h5>Mispronounced:</h5>
-                              <ul>
-                                {lastEvaluation.details.mispronouncedWords.map((item, i) => (
-                                  <li key={i}>
-                                    <strong>{item.word}</strong> → <span className="attempted">{item.attempted}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
+                        
+                        {lastEvaluation.details.mispronouncedWords.length > 0 && (
+                          <div className="error-section mispronounced-words">
+                            <h5>Mispronounced Words:</h5>
+                            <ul>
+                              {lastEvaluation.details.mispronouncedWords.map((item, i) => (
+                                <li key={i}>
+                                  <strong>{item.word}</strong> → <span className="attempted">{item.attempted}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
 
-                <div className="navigation">
+                <div className="navigation-controls">
                   <button 
                     onClick={handleNextPhrase}
                     disabled={listening}
-                    className="next-button"
+                    className={`next-button ${completedPhrases.size >= currentPhrases.length - 1 ? 'complete-button' : ''}`}
                   >
-                    {completedPhrases.size >= PHRASES.length - 1 
+                    {completedPhrases.size >= currentPhrases.length - 1 
                       ? "Complete Session" 
                       : "Next Phrase"}
                   </button>
                 </div>
               </div>
+            ) : (
+              <div className="loading-message">Loading assessment phrases...</div>
             )
           } />
 
           <Route path="/history" element={
-            <TeacherDashboard attempts={attempts} onAttemptsUpdate={function (): void {
-              throw new Error('Function not implemented.');
-            } } />
+            <TeacherDashboard 
+              attempts={attempts} 
+              onAttemptsUpdate={() => setAttempts(getAttemptHistory())} 
+            />
           } />
         </Routes>
       </div>

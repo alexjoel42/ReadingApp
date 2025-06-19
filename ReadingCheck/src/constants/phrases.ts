@@ -1,73 +1,38 @@
 // src/constants/phrases.ts
 
-export interface Phrase {
-  id: string;
-  text: string;
-  sightWords: readonly string[];
-  phoneticPatterns?: readonly string[];
-}
-
-export const PHRASES: readonly Phrase[] = [
+// Organized by phonetic progression
+export const PHRASE_SETS = [
+  // Set 1: CVC Words + Basic Sight Words
   {
-    id: 'phrase-1',
-    text: "I love myself",
-    sightWords: ["I", "love", "myself"],
-    phoneticPatterns: ["I", "l-uh-v", "my-self"]
+    id: 'set-1',
+    focus: "CVC Words & Basic Sight Words",
+    phrases: [
+      { id: 'p1-1', text: "I am strong", sightWords: ["I", "am"], phoneticPatterns: ["I", "a-m", "s-t-r-aw-ng"] },
+      { id: 'p1-2', text: "We can win", sightWords: ["we", "can"], phoneticPatterns: ["w-ee", "k-ah-n", "w-ih-n"] },
+      { id: 'p1-3', text: "You are kind", sightWords: ["you", "are"], phoneticPatterns: ["y-oo", "ar", "k-ie-n-d"] },
+      { id: 'p1-4', text: "My joy grows", sightWords: ["my"], phoneticPatterns: ["m-y", "j-oi", "g-r-ow-s"] },
+      { id: 'p1-5', text: "Be your best", sightWords: ["be", "your"], phoneticPatterns: ["b-ee", "y-or", "b-eh-s-t"] },
+      { id: 'p1-6', text: "Love yourself", sightWords: ["love"], phoneticPatterns: ["l-uh-v", "y-or-s-eh-l-f"] },
+      { id: 'p1-7', text: "We help others", sightWords: ["we"], phoneticPatterns: ["w-ee", "h-eh-l-p", "uh-th-er-z"] },
+      { id: 'p1-8', text: "Try new things", sightWords: ["try"], phoneticPatterns: ["t-r-ie", "n-oo", "th-ih-ng-z"] },
+      { id: 'p1-9', text: "Dream big dreams", sightWords: ["dream"], phoneticPatterns: ["d-r-ee-m", "b-ih-g", "d-r-ee-m-z"] },
+      { id: 'p1-10', text: "Hope shines bright", sightWords: ["hope"], phoneticPatterns: ["h-ow-p", "sh-ie-n-z", "b-r-ie-t"] }
+    ]
   },
+  // Set 2: Digraphs/Blends + Expanded Vocabulary
   {
-    id: 'phrase-2',
-    text: "The quick brown fox jumps over the lazy dog",
-    sightWords: ["the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"],
-    phoneticPatterns: ["th-uh", "kw-ih-k", "br-ow-n", "f-ah-k-s", "j-uh-m-p-s", "oh-v-er", "th-uh", "l-ay-z-ee", "d-aw-g"]
+    id: 'set-2',
+    focus: "Digraphs & Blends",
+    phrases: [
+      { id: 'p2-1', text: "Share with friends", sightWords: ["share", "with"], phoneticPatterns: ["sh-air", "w-ih-th", "f-r-eh-n-d-z"] },
+      { id: 'p2-2', text: "Think happy thoughts", sightWords: ["think"], phoneticPatterns: ["th-ih-ng-k", "h-ae-p-ee", "th-aw-t-s"] },
+      { id: 'p2-3', text: "When the sun shines", sightWords: ["when", "the"], phoneticPatterns: ["w-eh-n", "th-ee", "s-uh-n", "sh-ie-n-z"] },
+      { id: 'p2-4', text: "Which path to choose", sightWords: ["which", "to"], phoneticPatterns: ["w-ih-ch", "p-ae-th", "t-oo", "ch-oo-z"] },
+      { id: 'p2-5', text: "Through thick and thin", sightWords: ["and"], phoneticPatterns: ["th-r-oo", "th-ih-k", "ae-n-d", "th-ih-n"] }
+    ]
   },
-  {
-    id: 'phrase-3',
-    text: "Peter Piper picked a peck of pickled peppers",
-    sightWords: ["a", "of"],
-    phoneticPatterns: ["p-ee-t-er", "p-ie-p-er", "p-ih-k-t", "ay", "p-eh-k", "ah-v", "p-ih-k-l-d", "p-eh-p-er-z"]
-  }
+  // Add more sets as needed...
 ] as const;
 
-// Utility type to extract phrase type
-export type PhraseType = typeof PHRASES[number];
-
-// ======================================
-// Sight Words Master List
-// ======================================
-export const SIGHT_WORDS = [
-  "I", "a", "the", "and", "to", "in", "is", "it", "you", "that",
-  "he", "was", "for", "on", "are", "with", "they", "at", "be", "this",
-  "have", "from", "or", "one", "had", "by", "word", "but", "not", "what",
-  "all", "were", "we", "when", "your", "can", "said", "there", "use", "each",
-  "which", "she", "do", "how", "their", "if", "will", "up", "other", "about",
-  "out", "many", "then", "them", "these", "so", "some", "her", "would", "make"
-] as const;
-
-export type SightWord = typeof SIGHT_WORDS[number];
-
-// ======================================
-// Phonetic Patterns Master List
-// ======================================
-export const PHONETIC_PATTERNS = {
-  vowels: ["a", "e", "i", "o", "u"] as const,
-  consonantBlends: ["bl", "br", "cl", "cr", "dr", "fl", "fr", "gl", "gr", "pl", "pr", "tr"] as const,
-  digraphs: ["ch", "sh", "th", "wh", "ph", "ck", "ng"] as const,
-  diphthongs: ["oi", "oy", "ou", "ow", "au", "aw", "oo"] as const
-} as const;
-
-export type PhoneticPattern = 
-  | typeof PHONETIC_PATTERNS.vowels[number]
-  | typeof PHONETIC_PATTERNS.consonantBlends[number]
-  | typeof PHONETIC_PATTERNS.digraphs[number]
-  | typeof PHONETIC_PATTERNS.diphthongs[number];
-
-// ======================================
-// Utility Functions
-// ======================================
-export function getPhraseById(id: string): Phrase | undefined {
-  return PHRASES.find(phrase => phrase.id === id);
-}
-
-export function getRandomPhrase(): Phrase {
-  return PHRASES[Math.floor(Math.random() * PHRASES.length)];
-}
+export type PhraseSet = typeof PHRASE_SETS[number];
+export type Phrase = PhraseSet['phrases'][number];
