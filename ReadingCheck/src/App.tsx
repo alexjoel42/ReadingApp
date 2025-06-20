@@ -7,6 +7,7 @@ import StudentIdForm from './components/StudentIdForm';
 import TeacherDashboard from './components/TeacherDashboard';
 import type { Attempt } from './model';
 import './App.css';
+import type { Phrase } from './constants/phrases'
 import { PHRASE_SETS } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 

@@ -1,20 +1,38 @@
 import { compareTwoStrings } from 'string-similarity';
 import levenshtein from 'fast-levenshtein';
+import { dictionary as cmudict } from 'cmu-pronouncing-dictionary';
 import type { Phrase } from '../constants/phrases';
+
+// ======================
+// CMUdict Phoneme Utilities
+// ======================
+
+const getPhonemes = (word: string): string[] | null => {
+  const entry = cmudict[word.toUpperCase()];
+  return entry ? entry[0].split(' ') : null;
+};
+
+const cmuPhonemeCompare = (a: string, b: string): boolean => {
+  const aPhonemes = getPhonemes(a);
+  const bPhonemes = getPhonemes(b);
+  if (!aPhonemes || !bPhonemes) return false;
+  const levDist = levenshtein.get(aPhonemes.join(' '), bPhonemes.join(' '));
+  const maxLen = Math.max(aPhonemes.length, bPhonemes.length);
+  return (1 - levDist / maxLen) > 0.85;
+};
 
 // ======================
 // Utility Functions
 // ======================
 
-/**
- * Basic phonetic comparison using simplified Soundex algorithm
- */
 const phoneticCompare = (a: string, b: string): boolean => {
+  if (cmuPhonemeCompare(a, b)) return true;
+  // Fallback: simplified Soundex
   const transform = (str: string) => {
     return str
       .toLowerCase()
       .replace(/[^a-z]/g, '')
-      .replace(/[aeiouy]/g, '') // Remove vowels
+      .replace(/[aeiouy]/g, '')
       .replace(/([bfpv]+)/g, 'B')
       .replace(/([cgjkqsxz]+)/g, 'K')
       .replace(/([dt]+)/g, 'T')
@@ -23,37 +41,33 @@ const phoneticCompare = (a: string, b: string): boolean => {
       .replace(/h/g, '')
       .replace(/w/g, '');
   };
-
   return transform(a) === transform(b);
 };
 
-/**
- * Determines if an attempt is close enough to the target to be considered correct
- */
 const isSimilarEnough = (target: string, attempt: string): boolean => {
   const stringSim = compareTwoStrings(target, attempt);
   const phonetic = phoneticCompare(target, attempt);
   const levDist = levenshtein.get(target, attempt);
+  const phonemeSim = cmuPhonemeCompare(target, attempt);
 
   return (
+    phonemeSim ||
     phonetic ||
     stringSim > 0.85 ||
     (levDist <= 2 && target.length > 3)
   );
 };
 
-/**
- * Identifies words that are phonetically similar but not exact matches
- */
 const isMispronounced = (target: string, attempt: string): boolean => {
   const stringSim = compareTwoStrings(target, attempt);
   const phoneticMatch = phoneticCompare(target, attempt);
+  const phonemeSim = cmuPhonemeCompare(target, attempt);
 
-  return stringSim < 0.9 && phoneticMatch;
+  return stringSim < 0.9 && (phoneticMatch || phonemeSim);
 };
 
 // ======================
-// Core Evaluation
+// Core Evaluation Types
 // ======================
 
 export interface PronunciationResult {
@@ -72,9 +86,10 @@ export interface PronunciationResult {
   };
 }
 
-/**
- * Evaluates pronunciation attempt against target phrase
- */
+// ======================
+// Core Evaluation
+// ======================
+
 export const evaluatePronunciation = (
   targetPhrase: Phrase,
   attempt: string
@@ -102,9 +117,12 @@ export const evaluatePronunciation = (
       const stringSim = compareTwoStrings(targetWord, attemptWord);
       const phonetic = phoneticCompare(targetWord, attemptWord);
       const levDist = levenshtein.get(targetWord, attemptWord);
+      const phonemeSim = cmuPhonemeCompare(targetWord, attemptWord);
+
       const similarity = Math.max(
-        stringSim, 
-        phonetic ? 0.9 : 0, 
+        stringSim,
+        phonemeSim ? 0.95 : 0,
+        phonetic ? 0.9 : 0,
         1 - levDist / targetWord.length
       );
 
@@ -130,8 +148,8 @@ export const evaluatePronunciation = (
       // Phonetic pattern evaluation
       if (targetPhrase.phoneticPatterns?.[targetIndex]) {
         const pattern = targetPhrase.phoneticPatterns[targetIndex];
-        phoneticPatternResults[pattern] = 
-          phoneticCompare(targetWord, matchedWord) || 
+        phoneticPatternResults[pattern] =
+          phoneticCompare(targetWord, matchedWord) ||
           levenshtein.get(targetWord, matchedWord) <= 1;
       }
     } else {
@@ -152,19 +170,26 @@ export const evaluatePronunciation = (
   // Calculate scores
   const sightWordAccuracy = Object.values(sightWordResults).filter(Boolean).length;
   const phoneticPatternAccuracy = Object.values(phoneticPatternResults).filter(Boolean).length;
-  
+
   const overallScore = Math.round(
-    (targetWords.length - missingWords.length - mispronouncedWords.length) / 
-    targetWords.length * 100
+    (targetWords.length - missingWords.length - mispronouncedWords.length) /
+      targetWords.length *
+      100
   );
-  
-  const sightWordScore = targetPhrase.sightWords.length > 0 
-    ? Math.round((sightWordAccuracy / targetPhrase.sightWords.length) * 100)
-    : 100;
-  
-  const phoneticScore = (targetPhrase.phoneticPatterns?.length ?? 0) > 0
-    ? Math.round((phoneticPatternAccuracy / (targetPhrase.phoneticPatterns?.length ?? 1)) * 100)
-    : 100;
+
+  const sightWordScore =
+    targetPhrase.sightWords.length > 0
+      ? Math.round((sightWordAccuracy / targetPhrase.sightWords.length) * 100)
+      : 100;
+
+  const phoneticScore =
+    (targetPhrase.phoneticPatterns?.length ?? 0) > 0
+      ? Math.round(
+          (phoneticPatternAccuracy /
+            (targetPhrase.phoneticPatterns?.length ?? 1)) *
+            100
+        )
+      : 100;
 
   return {
     feedback: generateFeedback(
@@ -201,26 +226,28 @@ const generateFeedback = (
   phoneticScore: number
 ): string => {
   const feedbackParts: string[] = [];
-  
+
   if (missing.length > 0) {
     feedbackParts.push(`Missing words: ${missing.join(', ')}`);
   }
-  
+
   if (extra.length > 0) {
     feedbackParts.push(`Extra words: ${extra.join(', ')}`);
   }
-  
+
   if (mispronounced.length > 0) {
     feedbackParts.push(
-      `Mispronounced: ${mispronounced.map(m => `${m.word} (as ${m.attempted})`).join(', ')}`
+      `Mispronounced: ${mispronounced
+        .map((m) => `${m.word} (as ${m.attempted})`)
+        .join(', ')}`
     );
   }
-  
+
   feedbackParts.push(
     `Sight word accuracy: ${sightWordScore}%`,
     `Phonetic accuracy: ${phoneticScore}%`
   );
-  
+
   return feedbackParts.join('. ') || 'Perfect pronunciation!';
 };
 
@@ -237,10 +264,10 @@ export const calculateAccuracy = (
   let correct = 0;
   const usedIndices = new Set<number>();
 
-  targetWords.forEach(targetWord => {
+  targetWords.forEach((targetWord) => {
     for (let i = 0; i < attemptWords.length; i++) {
       if (usedIndices.has(i)) continue;
-      
+
       if (isSimilarEnough(targetWord, attemptWords[i])) {
         correct++;
         usedIndices.add(i);
@@ -250,4 +277,10 @@ export const calculateAccuracy = (
   });
 
   return Math.round((correct / targetWords.length) * 100);
+};
+export const evaluatePhrase = (
+  targetPhrase: Phrase,
+  attempt: string
+): PronunciationResult => {
+  return evaluatePronunciation(targetPhrase, attempt);
 };
