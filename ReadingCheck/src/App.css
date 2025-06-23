@@ -633,3 +633,52 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.progress-report {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: sans-serif;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.metric-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+}
+
+.metric-card h3 {
+  margin-top: 0;
+  color: #555;
+  font-size: 1rem;
+}
+
+.metric-card p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 10px 0 0;
+}
+
+.focus-area {
+  background: #fff8e1;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.focus-area h3 {
+  color: #e65100;
+  margin-top: 0;
+}
+
+.focus-area ul {
+  padding-left: 20px;
+}

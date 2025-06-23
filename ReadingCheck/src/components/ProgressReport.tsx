@@ -5,67 +5,97 @@ interface ProgressReportProps {
   studentId: string;
 }
 
-interface StudentProgress {
+// The 6 key metrics we track
+interface ProgressMetrics {
   currentSet: number;
-  completedPhrases: Record<string, {
-    mastered: boolean;
-    lastAccuracy: number;
-    attempts: number;
-  }>;
+  setMastery: number;
+  focusArea: string;
+  needsWork: string[];
+  recentAccuracy: number;
+  attemptsToday: number;
 }
 
 export const ProgressReport = ({ studentId }: ProgressReportProps) => {
   const progress = getStudentProgress(studentId);
-  const currentSet = PHRASE_SETS[progress.currentSet];
-  
-  const calculateMasteryPercent = (progress: StudentProgress): number => {
-    const currentPhrases = PHRASE_SETS[progress.currentSet].phrases;
-    const masteredCount = currentPhrases.reduce((count, phrase) => {
-      const phraseRecord = progress.completedPhrases[phrase.id];
-      return count + (phraseRecord?.mastered ? 1 : 0);
-    }, 0);
-    return currentPhrases.length > 0 ? Math.round((masteredCount / currentPhrases.length) * 100) : 0;
+  const currentSetData = PHRASE_SETS[progress.currentSet];
+
+  // Calculate all key metrics in one pass
+  const getProgressMetrics = (): ProgressMetrics => {
+    const currentPhrases = currentSetData.phrases;
+    const today = new Date().toDateString();
+    
+    let masteredCount = 0;
+    let totalAccuracy = 0;
+    let attemptCount = 0;
+    const strugglingPhrases: string[] = [];
+
+    currentPhrases.forEach(phrase => {
+      const record = progress.completedPhrases[phrase.id];
+      if (!record) {
+        strugglingPhrases.push(phrase.text);
+        return;
+      }
+
+      if (record.mastered) masteredCount++;
+      if (new Date(record.timestamp).toDateString() === today) attemptCount++;
+      
+      totalAccuracy += record.lastAccuracy;
+      
+      if (record.lastAccuracy < 70 || !record.mastered) {
+        strugglingPhrases.push(phrase.text);
+      }
+    });
+
+    return {
+      currentSet: progress.currentSet + 1,
+      setMastery: Math.round((masteredCount / currentPhrases.length) * 100),
+      focusArea: currentSetData.focus,
+      needsWork: strugglingPhrases.slice(0, 3), // Top 3 to focus on
+      recentAccuracy: currentPhrases.length > 0 
+        ? Math.round(totalAccuracy / currentPhrases.length) 
+        : 0,
+      attemptsToday: attemptCount
+    };
   };
 
-  const getPhraseText = (phraseId: string): string => {
-    const allPhrases: { id: string; text: string }[] = PHRASE_SETS.flatMap(set =>
-      set.phrases.map((phrase: any) => ({ id: phrase.id, text: phrase.text }))
-    );
-    const phrase = allPhrases.find((p) => p.id === phraseId);
-    return phrase?.text || 'Unknown phrase';
-  };
+  const metrics = getProgressMetrics();
 
   return (
     <div className="progress-report">
-      <h3>Reading Progress: {studentId}</h3>
+      <h2>Progress Summary: {studentId}</h2>
       
-      <div className="set-progress">
-        <h4>Current Focus: Set {progress.currentSet + 1}</h4>
-        <p>Phonics: {currentSet.focus}</p>
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <h3>Current Set</h3>
+          <p>Set {metrics.currentSet}</p>
+        </div>
         
-        <div className="progress-bar">
-          <div 
-            className="progress-fill"
-            style={{ width: `${calculateMasteryPercent(progress)}%` }}
-          >
-            {calculateMasteryPercent(progress)}% Mastered
-          </div>
+        <div className="metric-card">
+          <h3>Set Mastery</h3>
+          <p>{metrics.setMastery}%</p>
+        </div>
+        
+        <div className="metric-card">
+          <h3>Focus Area</h3>
+          <p>{metrics.focusArea}</p>
+        </div>
+        
+        <div className="metric-card">
+          <h3>Recent Accuracy</h3>
+          <p>{metrics.recentAccuracy}%</p>
+        </div>
+        
+        <div className="metric-card">
+          <h3>Today's Attempts</h3>
+          <p>{metrics.attemptsToday}</p>
         </div>
       </div>
-      
-      <div className="recent-phrases">
-        <h4>Recently Practiced</h4>
+
+      <div className="focus-area">
+        <h3>Priority Practice</h3>
         <ul>
-          {Object.entries(progress.completedPhrases)
-            .sort(([, a], [, b]) => b.attempts - a.attempts)
-            .slice(0, 5)
-            .map(([phraseId, record]) => (
-              <li key={phraseId}>
-                {getPhraseText(phraseId)}: 
-                <span className={record.mastered ? 'mastered' : 'practicing'}>
-                  {record.lastAccuracy}% ({record.attempts} tries)
-                </span>
-              </li>
+          {metrics.needsWork.map((phrase, i) => (
+            <li key={i}>{phrase}</li>
           ))}
         </ul>
       </div>
