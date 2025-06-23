@@ -16,6 +16,14 @@
   --table-border-color: #ddd;
 }
 
+/* Dyslexia-friendly font stack */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://dyslexicfonts.com/fonts/OpenDyslexic-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* Reset and Base Styles */
 * {
   box-sizing: border-box;
@@ -24,27 +32,31 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, 
-              Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'OpenDyslexic', 'Comic Sans MS', 'Arial', sans-serif;
   background-color: #f5f7fa;
   color: var(--text);
-  line-height: 1.6;
+  line-height: 1.8;
+  font-size: 18px;
+  letter-spacing: 0.5px;
 }
 
-/* App Container */
+/* App Container - Enhanced */
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
-/* Header Styles */
+/* Header Styles - Enhanced */
 .app-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  padding: 1rem;
+  padding: 1.5rem 2rem;
   background: var(--primary);
   color: white;
   display: flex;
@@ -52,50 +64,53 @@ body {
   align-items: center;
   z-index: 100;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-size: 1.2rem;
 }
 
 .app-logo {
   color: white;
   font-weight: bold;
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 
 .teacher-link {
   color: white;
-  padding: 0.5rem 1rem;
-  border: 1px solid white;
-  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid white;
+  border-radius: 6px;
   text-decoration: none;
   transition: all 0.2s;
+  font-size: 1.1rem;
 }
 
 .teacher-link:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.2);
 }
 
 .student-badge {
   background: white;
   color: var(--primary);
-  padding: 0.3rem 0.8rem;
+  padding: 0.5rem 1rem;
   border-radius: 20px;
   font-weight: bold;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 }
 
-/* Main Content Area */
+/* Main Content Area - Enhanced */
 .main-content {
-  margin-top: 70px; /* Account for fixed header */
-  padding: 2rem;
+  margin-top: 90px;
+  padding: 3rem 0;
   flex: 1;
+  width: 100%;
 }
 
-/* Dashboard Styles */
+/* Dashboard Styles - Original + Enhanced */
 .dashboard {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  padding: 2rem;
+  padding: 3rem;
   margin: 0 auto;
   max-width: 1200px;
 }
@@ -109,7 +124,7 @@ body {
 
 .stat-card {
   background: white;
-  padding: 1.5rem;
+  padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   border-top: 4px solid var(--primary);
@@ -118,13 +133,13 @@ body {
 .stat-card h3 {
   margin-top: 0;
   color: var(--secondary);
-  font-size: 1rem;
+  font-size: 1.2rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .stat-card .stat-value {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
   margin: 0.5rem 0;
   color: var(--dark);
@@ -135,7 +150,7 @@ body {
   color: #666;
 }
 
-/* Table Styles */
+/* Table Styles - Original + Enhanced */
 .student-table {
   width: 100%;
   border-collapse: collapse;
@@ -151,18 +166,19 @@ body {
 }
 
 .student-table th {
-  padding: 1rem;
+  padding: 1.25rem;
   text-align: left;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   letter-spacing: 0.5px;
 }
 
 .student-table td {
-  padding: 1rem;
+  padding: 1.25rem;
   border-bottom: 1px solid var(--table-border-color);
   vertical-align: top;
+  font-size: 1.1rem;
 }
 
 .student-table tr:not(:last-child) td {
@@ -181,10 +197,10 @@ body {
   background-color: var(--danger);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 1rem;
   transition: all 0.2s ease;
 }
 
@@ -209,7 +225,7 @@ body {
   color: var(--success);
 }
 
-/* Problem words display */
+/* Problem words display - Original */
 .problem-words {
   background: #fff8e1;
   padding: 1rem;
@@ -232,46 +248,47 @@ body {
 .problem-word-tag {
   background: #ffe0b2;
   color: #e65100;
-  padding: 0.3rem 0.8rem;
+  padding: 0.5rem 1rem;
   border-radius: 1rem;
-  font-size: 0.85rem;
+  font-size: 1rem;
 }
 
-/* Student Login Form */
+/* Student Login Form - Enhanced */
 .student-form-container {
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 2rem;
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 3rem;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
 .student-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .student-form label {
   font-weight: 500;
   margin-bottom: 0.5rem;
+  font-size: 1.1rem;
 }
 
 .student-form input {
-  padding: 0.8rem;
+  padding: 1rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .student-form button {
   background: var(--primary);
   color: white;
-  padding: 0.8rem;
+  padding: 1rem;
   border: none;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -280,11 +297,11 @@ body {
   background: var(--secondary);
 }
 
-/* Practice Interface */
+/* Practice Interface - Enhanced */
 .practice-interface {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 3rem;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -292,51 +309,53 @@ body {
 
 .phrase-card {
   background: var(--light);
-  padding: 1.5rem;
+  padding: 2rem;
   border-radius: 8px;
   margin-bottom: 2rem;
   border-left: 4px solid var(--primary);
 }
 
 .target-phrase {
-  font-size: 1.5rem;
-  margin: 1rem 0;
-  line-height: 1.4;
+  font-size: 2rem;
+  margin: 2rem 0;
+  line-height: 1.6;
 }
 
 .difficulty {
   font-weight: bold;
   color: var(--secondary);
+  font-size: 1.2rem;
 }
 
 .sight-words {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .sight-word-tag {
   display: inline-block;
   background: var(--info);
   color: white;
-  padding: 0.3rem 0.6rem;
+  padding: 0.5rem 1rem;
   border-radius: 1rem;
-  margin-right: 0.5rem;
-  font-size: 0.9rem;
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
 }
 
-/* Recording Controls */
+/* Recording Controls - Enhanced */
 .recording-controls {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
 .record-button, .stop-button {
-  padding: 0.8rem 1.5rem;
+  padding: 1rem 2rem;
   border: none;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 200px;
 }
 
 .record-button {
@@ -359,51 +378,53 @@ button:disabled {
 }
 
 .timer {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-weight: bold;
   color: var(--dark);
+  font-size: 1.2rem;
 }
 
-/* Attempt Results */
+/* Attempt Results - Enhanced */
 .attempt-result {
-  margin: 2rem 0;
-  padding: 1.5rem;
+  margin: 2.5rem 0;
+  padding: 2rem;
   background: var(--light);
   border-radius: 8px;
 }
 
 .analysis-results {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
 }
 
 .feedback {
   font-weight: 500;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
 }
 
 .score-breakdown {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .score-meter {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .meter-container {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .meter-fill {
-  height: 20px;
-  border-radius: 10px;
+  height: 24px;
+  border-radius: 12px;
   transition: width 0.3s ease;
 }
 
@@ -420,20 +441,21 @@ button:disabled {
 }
 
 .error-details {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
 }
 
 .missing-words, .mispronounced-words {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .error-word {
   display: inline-block;
   background: #ffebee;
   color: var(--danger);
-  padding: 0.3rem 0.6rem;
+  padding: 0.5rem 1rem;
   border-radius: 4px;
-  margin-right: 0.5rem;
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
 }
 
 .mispronounced-words ul {
@@ -442,7 +464,8 @@ button:disabled {
 }
 
 .mispronounced-words li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
 }
 
 .attempted {
@@ -450,20 +473,20 @@ button:disabled {
   font-style: italic;
 }
 
-/* Navigation */
+/* Navigation - Enhanced */
 .navigation {
   display: flex;
   justify-content: flex-end;
-  margin-top: 2rem;
+  margin-top: 2.5rem;
 }
 
 .next-button {
   background: var(--primary);
   color: white;
-  padding: 0.8rem 1.5rem;
+  padding: 1rem 2rem;
   border: none;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -472,73 +495,22 @@ button:disabled {
   background: var(--secondary);
 }
 
-/* Error Message */
+/* Error Message - Enhanced */
 .error {
   text-align: center;
-  padding: 2rem;
+  padding: 2.5rem;
   color: var(--danger);
   font-weight: bold;
+  font-size: 1.3rem;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
-  }
-  
-  .dashboard-stats {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .practice-interface, .student-form-container {
-    padding: 1.5rem;
-  }
-  
-  .recording-controls {
-    flex-direction: column;
-  }
-  
-  .score-meter {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .student-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  
-  .student-table th, 
-  .student-table td {
-    padding: 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .app-header {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  
-  .dashboard-stats {
-    grid-template-columns: 1fr;
-  }
-  
-  .student-badge {
-    margin-top: 0.5rem;
-  }
-}
-
-/* Phonetic-specific styles */
+/* Phonetic-specific styles - Original */
 .phonetic-insights {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin: 1rem 0;
-  padding: 1rem;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
   background: #f8f9fa;
   border-radius: 8px;
 }
@@ -546,6 +518,7 @@ button:disabled {
 .insight {
   display: flex;
   justify-content: space-between;
+  font-size: 1.1rem;
 }
 
 .insight .value {
@@ -557,8 +530,8 @@ button:disabled {
 }
 
 .phonetic-analysis-details {
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
   background: white;
   border-radius: 8px;
   border: 1px solid #eee;
@@ -567,12 +540,12 @@ button:disabled {
 .attempts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .attempt-card {
-  padding: 1rem;
+  padding: 1.5rem;
   border-radius: 8px;
   background: #f8f9fa;
   border-left: 4px solid var(--primary);
@@ -581,9 +554,10 @@ button:disabled {
 .attempt-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid #eee;
+  font-size: 1.1rem;
 }
 
 .attempt-header .accuracy {
@@ -595,13 +569,13 @@ button:disabled {
 }
 
 .analysis-section {
-  margin: 0.5rem 0;
+  margin: 0.75rem 0;
 }
 
 .analysis-section h5 {
-  margin: 0.5rem 0;
+  margin: 0.75rem 0;
   color: var(--secondary);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 }
 
 .analysis-section.error {
@@ -617,68 +591,208 @@ button:disabled {
 }
 
 .attempt-footer {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid #eee;
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: #666;
 }
 
-@media (max-width: 768px) {
-  .phonetic-insights {
-    grid-template-columns: 1fr;
-  }
-  
-  .attempts-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* Progress Report - Enhanced */
 .progress-report {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 20px;
-  font-family: sans-serif;
+  padding: 2.5rem;
+  font-family: 'OpenDyslexic', sans-serif;
 }
 
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin: 20px 0;
+  gap: 2rem;
+  margin: 2.5rem 0;
 }
 
 .metric-card {
   background: #f8f9fa;
-  border-radius: 8px;
-  padding: 15px;
+  border-radius: 12px;
+  padding: 2rem;
   text-align: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .metric-card h3 {
   margin-top: 0;
-  color: #555;
-  font-size: 1rem;
+  color: var(--secondary);
+  font-size: 1.3rem;
 }
 
 .metric-card p {
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: bold;
-  margin: 10px 0 0;
+  margin: 1rem 0 0;
 }
 
 .focus-area {
   background: #fff8e1;
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 20px;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-top: 2.5rem;
+  border-left: 4px solid var(--warning);
 }
 
 .focus-area h3 {
   color: #e65100;
   margin-top: 0;
+  font-size: 1.4rem;
 }
 
 .focus-area ul {
-  padding-left: 20px;
+  padding-left: 2rem;
+  font-size: 1.2rem;
+  line-height: 1.8;
+}
+
+/* Responsive Adjustments - Enhanced */
+@media (max-width: 1200px) {
+  .app {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (max-width: 992px) {
+  body {
+    font-size: 17px;
+  }
+  
+  .app-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  .main-content {
+    margin-top: 85px;
+  }
+  
+  .target-phrase {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .app {
+    padding: 0 1rem;
+  }
+  
+  .app-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  
+  .teacher-link {
+    padding: 0.5rem 1rem;
+  }
+  
+  .student-form-container,
+  .practice-interface {
+    padding: 2rem 1.5rem;
+  }
+  
+  .target-phrase {
+    font-size: 1.6rem;
+  }
+  
+  .recording-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .phonetic-insights,
+  .attempts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  body {
+    font-size: 16px;
+  }
+  
+  .student-form-container,
+  .practice-interface {
+    padding: 1.5rem 1rem;
+  }
+  
+  .target-phrase {
+    font-size: 1.4rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-card {
+    padding: 1.5rem;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 2rem;
+  }
+}
+
+/* Additional Accessibility Features */
+button, input[type="submit"], input[type="button"] {
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+:focus {
+  outline: 3px solid var(--warning);
+  outline-offset: 2px;
+}
+
+/* Dyslexia-specific improvements */
+p, li, dd, dt, div, span {
+  font-weight: 400;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+/* Text selection colors */
+::selection {
+  background: var(--info);
+  color: white;
+}
+
+/* Print styles */
+@media print {
+  .app-header, .teacher-link, .recording-controls {
+    display: none;
+  }
+  
+  body {
+    font-size: 14pt;
+    background: white;
+    color: black;
+  }
+  
+  .main-content {
+    margin-top: 0;
+    padding: 0;
+  }
+  
+  .dashboard, .practice-interface {
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
 }

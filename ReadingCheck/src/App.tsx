@@ -85,7 +85,13 @@ const App: React.FC = () => {
     };
 
     saveAttempt(newAttempt);
-    recordAttempt(studentId, currentPhrase.id, evaluation.score.overall);
+    recordAttempt(
+      studentId,
+      currentPhrase.id,
+      evaluation.score.overall,
+      transcript,
+      durationMs
+    );
     setAttempts(prev => [newAttempt, ...prev]);
     setStartTime(null);
   };
