@@ -1,24 +1,60 @@
-# 📚 ReadingApp
+# 📖 ReadingCheck  
 
-[![Node.js CI](https://github.com/alexjoel42/ReadingApp/actions/workflows/node.js.yml/badge.svg)](https://github.com/alexjoel42/ReadingApp/actions/workflows/node.js.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A modern reading progress tracker built with React, TypeScript, and Vite.  
 
-An interactive reading coach application that helps students improve pronunciation through real-time feedback.
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 
-## ✨ Features
+## ✨ Features  
 
-- 🎤 Speech recognition with accuracy scoring
-- 📊 Progress tracking and analytics
-- 🧠 Adaptive learning algorithms
-- 👩‍🏫 Teacher dashboard for monitoring
+- Track reading progress by pages or percentage  
+- Add and manage multiple books  
+- Responsive design  
+- Fast and lightweight (Vite-powered)  
 
-## 🚀 Quick Start
+## 🗂️ Project Structure  
+ReadingCheck/
+├── public/
+│ ├── vite.svg
+│ └── (other static assets)
+├── src/
+│ ├── assets/
+│ │ └── react.svg
+│ ├── components/
+│ │ ├── BookCard.tsx
+│ │ ├── ProgressBar.tsx
+│ │ └── (other components)
+│ ├── hooks/
+│ │ └── useReadingProgress.ts
+│ ├── types/
+│ │ └── book.d.ts
+│ ├── App.tsx
+│ ├── main.tsx
+│ ├── vite-env.d.ts
+│ └── (other source files)
+├── .gitignore
+├── index.html
+├── package.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
+└── README.md
 
-### Prerequisites
-- Node.js 16.x or later
-- npm 7.x or later
-- Chrome/Firefox browser
 
-### Installation
-```bash
-make setup
+## 🚀 Quick Start  
+
+1. Clone the repo:  
+   ```sh
+   git clone https://github.com/alexjoel42/ReadingApp.git
+   cd ReadingApp/ReadingCheck
+   ```
+ 
+
+2.  `npm install  # or yarn/pnpm`
+
+3.  `npm run build`
+
+## Notes
+Uses localStorage for persistence 
+
