@@ -144,7 +144,9 @@ export const ProgressReport = ({ studentId }: ProgressReportProps) => {
     <div className="progress-card">
       <div className="progress-header">
         <h3>Progress Report for {studentId}</h3>
-        <p>Current Set: {currentSet.name} ({progress.currentSet + 1}/{PHRASE_SETS.length})</p>
+        <p>
+          Current Set: {currentSet.id} ({progress.currentSet + 1}/{PHRASE_SETS.length})
+        </p>
       </div>
       
       <div className="table-container">

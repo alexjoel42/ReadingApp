@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -7,19 +6,18 @@ import StudentIdForm from './components/StudentIdForm';
 import TeacherDashboard from './components/TeacherDashboard';
 import type { Attempt } from './model';
 import './App.css';
-import type { Phrase } from './constants/phrases'
+import type { Phrase } from './constants/phrases';
 import { PHRASE_SETS } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
+import PhraseCard from './practice/PhraseCard';
+import RecordingControls from './practice/ReadingControls.tsx'; // Adjust this path if necessary
+
 
 const App: React.FC = () => {
   const [studentId, setStudentId] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [completedPhrases, setCompletedPhrases] = useState<Set<string>>(new Set());
-  const [lastEvaluation, setLastEvaluation] = useState<ReturnType<typeof evaluatePronunciation> | null>(null);
-  const [currentPhrases, setCurrentPhrases] = useState<Phrase[]>([]);
-
+  
+  // Speech recognition hook remains in App.tsx since it's used across components
   const {
     transcript,
     listening,
@@ -31,6 +29,72 @@ const App: React.FC = () => {
     setAttempts(getAttemptHistory());
   }, []);
 
+  if (!browserSupportsSpeechRecognition) {
+    return <div className="error">Your browser doesn't support speech recognition.</div>;
+  }
+
+  return (
+    <Router>
+      <div className="app">
+        <header className="app-header">
+          <Link to="/" className="app-logo">Reading Coach</Link>
+          <Link to="/history" className="teacher-link">Teacher Dashboard</Link>
+          {studentId && <span className="student-badge">Student: {studentId}</span>}
+        </header>
+
+        <Routes>
+          <Route path="/" element={
+            !studentId ? (
+              <StudentIdForm onStudentIdSet={setStudentId} />
+            ) : (
+              <PracticeSession 
+                studentId={studentId}
+                transcript={transcript}
+                listening={listening}
+                resetTranscript={resetTranscript}
+                onSessionComplete={() => setStudentId(null)}
+                onAttemptRecorded={(newAttempt) => setAttempts(prev => [newAttempt, ...prev])}
+              />
+            )
+          } />
+
+          <Route path="/history" element={
+            <TeacherDashboard 
+              attempts={attempts} 
+              onAttemptsUpdate={() => setAttempts(getAttemptHistory())} 
+            />
+          } />
+        </Routes>
+      </div>
+    </Router>
+  );
+};
+
+// PracticeSession component moved inside App.tsx for AI readability
+interface PracticeSessionProps {
+  studentId: string;
+  transcript: string;
+  listening: boolean;
+  resetTranscript: () => void;
+  onSessionComplete: () => void;
+  onAttemptRecorded: (attempt: Attempt) => void;
+}
+
+const PracticeSession: React.FC<PracticeSessionProps> = ({
+  studentId,
+  transcript,
+  listening,
+  resetTranscript,
+  onSessionComplete,
+  onAttemptRecorded
+}) => {
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+  const [completedPhrases, setCompletedPhrases] = useState<Set<string>>(new Set());
+  const [lastEvaluation, setLastEvaluation] = useState<ReturnType<typeof evaluatePronunciation> | null>(null);
+  const [currentPhrases, setCurrentPhrases] = useState<Phrase[]>([]);
+
+  // Get assessment set based on student progress
   const getAssessmentSet = (studentId: string) => {
     const progress = getStudentProgress(studentId);
     const currentSet = PHRASE_SETS[progress.currentSet].phrases;
@@ -41,18 +105,16 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    if (studentId) {
-      const phrases = getAssessmentSet(studentId);
-      setCurrentPhrases(phrases);
-      setCurrentPhraseIndex(0);
-      setCompletedPhrases(new Set());
-      resetTranscript();
-      setLastEvaluation(null);
-    }
-  }, [studentId]);
+    const phrases = getAssessmentSet(studentId);
+    setCurrentPhrases(phrases);
+    setCurrentPhraseIndex(0);
+    setCompletedPhrases(new Set());
+    resetTranscript();
+    setLastEvaluation(null);
+  }, [studentId, resetTranscript]);
 
   const handleStartRecording = () => {
-    if (!studentId || currentPhrases.length === 0 || listening) return;
+    if (currentPhrases.length === 0 || listening) return;
     resetTranscript();
     setLastEvaluation(null);
     setStartTime(Date.now());
@@ -60,7 +122,7 @@ const App: React.FC = () => {
   };
 
   const handleStopRecording = () => {
-    if (!startTime || !studentId || currentPhrases.length === 0 || !listening) return;
+    if (!startTime || currentPhrases.length === 0 || !listening) return;
 
     SpeechRecognition.stopListening();
     const durationMs = Date.now() - startTime;
@@ -92,7 +154,7 @@ const App: React.FC = () => {
       transcript,
       durationMs
     );
-    setAttempts(prev => [newAttempt, ...prev]);
+    onAttemptRecorded(newAttempt);
     setStartTime(null);
   };
 
@@ -103,7 +165,7 @@ const App: React.FC = () => {
     setCompletedPhrases(updatedCompleted);
 
     if (updatedCompleted.size >= currentPhrases.length) {
-      setStudentId(null);
+      onSessionComplete();
       return;
     }
 
@@ -117,168 +179,110 @@ const App: React.FC = () => {
     setLastEvaluation(null);
   };
 
-  if (!browserSupportsSpeechRecognition) {
-    return <div className="error">Your browser doesn't support speech recognition.</div>;
+  if (currentPhrases.length === 0) {
+    return <div className="loading-message">Loading assessment phrases...</div>;
   }
 
   return (
-    <Router>
-      <div className="app">
-        <header className="app-header">
-          <Link to="/" className="app-logo">Reading Coach</Link>
-          <Link to="/history" className="teacher-link">Teacher Dashboard</Link>
-          {studentId && <span className="student-badge">Student: {studentId}</span>}
-        </header>
+    <div className="practice-interface">
+      <PhraseCard 
+        phrase={currentPhrases[currentPhraseIndex]}
+        currentIndex={currentPhraseIndex}
+        totalPhrases={currentPhrases.length}
+      />
+      
+      <RecordingControls 
+        listening={listening}
+        startTime={startTime}
+        onStartRecording={handleStartRecording}
+        onStopRecording={handleStopRecording}
+      />
 
-        <Routes>
-          <Route path="/" element={
-            !studentId ? (
-              <StudentIdForm onStudentIdSet={setStudentId} />
-            ) : currentPhrases.length > 0 ? (
-              <div className="practice-interface">
-                <div className="phrase-card">
-                  <h2>Phrase {currentPhraseIndex + 1} of {currentPhrases.length}</h2>
-                  <p className="target-phrase">"{currentPhrases[currentPhraseIndex].text}"</p>
-                  
-                  {currentPhrases[currentPhraseIndex].sightWords?.length > 0 && (
-                    <div className="sight-words">
-                      <span>Sight Words: </span>
-                      {currentPhrases[currentPhraseIndex].sightWords.map((word, i) => (
-                        <span key={i} className="sight-word-tag">
-                          {word}
-                          {i < currentPhrases[currentPhraseIndex].sightWords.length - 1 ? ' ' : ''}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="recording-controls">
-                  <button 
-                    onClick={handleStartRecording} 
-                    disabled={listening}
-                    className={`record-button ${listening ? 'recording' : ''}`}
-                  >
-                    {listening ? (
-                      <>
-                        <span className="pulse-dot">●</span> Recording...
-                      </>
-                    ) : 'Start Recording'}
-                  </button>
-                  <button
-                    onClick={handleStopRecording}
-                    disabled={!listening}
-                    className="stop-button"
-                  >
-                    Stop Recording
-                  </button>
-                </div>
-
-                {listening && startTime && (
-                  <div className="timer">
-                    Recording: {((Date.now() - startTime) / 1000).toFixed(1)}s
+      {transcript && (
+        <div className="attempt-result">
+          <h3>Your attempt:</h3>
+          <p className="attempted-phrase">"{transcript}"</p>
+          
+          {lastEvaluation && (
+            <div className="analysis-results">
+              <h4>Analysis:</h4>
+              <div className="feedback-message">{lastEvaluation.feedback}</div>
+              
+              <div className="score-breakdown">
+                <div className="score-meter">
+                  <span>Overall Accuracy: </span>
+                  <div className="meter-container">
+                    <div 
+                      className="meter-fill overall" 
+                      style={{ width: `${lastEvaluation.score.overall}%` }}
+                    />
+                    <span className="score-value">{lastEvaluation.score.overall}%</span>
                   </div>
-                )}
-
-                {transcript && (
-                  <div className="attempt-result">
-                    <h3>Your attempt:</h3>
-                    <p className="attempted-phrase">"{transcript}"</p>
-                    
-                    {lastEvaluation && (
-                      <div className="analysis-results">
-                        <h4>Analysis:</h4>
-                        <div className="feedback-message">{lastEvaluation.feedback}</div>
-                        
-                        <div className="score-breakdown">
-                          <div className="score-meter">
-                            <span>Overall Accuracy: </span>
-                            <div className="meter-container">
-                              <div 
-                                className="meter-fill overall" 
-                                style={{ width: `${lastEvaluation.score.overall}%` }}
-                              />
-                              <span className="score-value">{lastEvaluation.score.overall}%</span>
-                            </div>
-                          </div>
-                          
-                          <div className="score-meter">
-                            <span>Sight Words: </span>
-                            <div className="meter-container">
-                              <div 
-                                className="meter-fill sight-words" 
-                                style={{ width: `${lastEvaluation.score.sightWords}%` }}
-                              />
-                              <span className="score-value">{lastEvaluation.score.sightWords}%</span>
-                            </div>
-                          </div>
-                          
-                          <div className="score-meter">
-                            <span>Phonetics: </span>
-                            <div className="meter-container">
-                              <div 
-                                className="meter-fill phonetics" 
-                                style={{ width: `${lastEvaluation.score.phoneticPatterns}%` }}
-                              />
-                              <span className="score-value">{lastEvaluation.score.phoneticPatterns}%</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {lastEvaluation.details.missingWords.length > 0 && (
-                          <div className="error-section missing-words">
-                            <h5>Missing Words:</h5>
-                            <div className="word-list">
-                              {lastEvaluation.details.missingWords.map((word, i) => (
-                                <span key={i} className="error-word">{word}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {lastEvaluation.details.mispronouncedWords.length > 0 && (
-                          <div className="error-section mispronounced-words">
-                            <h5>Mispronounced Words:</h5>
-                            <ul>
-                              {lastEvaluation.details.mispronouncedWords.map((item, i) => (
-                                <li key={i}>
-                                  <strong>{item.word}</strong> → <span className="attempted">{item.attempted}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                </div>
+                
+                <div className="score-meter">
+                  <span>Sight Words: </span>
+                  <div className="meter-container">
+                    <div 
+                      className="meter-fill sight-words" 
+                      style={{ width: `${lastEvaluation.score.sightWords}%` }}
+                    />
+                    <span className="score-value">{lastEvaluation.score.sightWords}%</span>
                   </div>
-                )}
-
-                <div className="navigation-controls">
-                  <button 
-                    onClick={handleNextPhrase}
-                    disabled={listening}
-                    className={`next-button ${completedPhrases.size >= currentPhrases.length - 1 ? 'complete-button' : ''}`}
-                  >
-                    {completedPhrases.size >= currentPhrases.length - 1 
-                      ? "Complete Session" 
-                      : "Next Phrase"}
-                  </button>
+                </div>
+                
+                <div className="score-meter">
+                  <span>Phonetics: </span>
+                  <div className="meter-container">
+                    <div 
+                      className="meter-fill phonetics" 
+                      style={{ width: `${lastEvaluation.score.phoneticPatterns}%` }}
+                    />
+                    <span className="score-value">{lastEvaluation.score.phoneticPatterns}%</span>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className="loading-message">Loading assessment phrases...</div>
-            )
-          } />
 
-          <Route path="/history" element={
-            <TeacherDashboard 
-              attempts={attempts} 
-              onAttemptsUpdate={() => setAttempts(getAttemptHistory())} 
-            />
-          } />
-        </Routes>
+              {lastEvaluation.details.missingWords.length > 0 && (
+                <div className="error-section missing-words">
+                  <h5>Missing Words:</h5>
+                  <div className="word-list">
+                    {lastEvaluation.details.missingWords.map((word, i) => (
+                      <span key={i} className="error-word">{word}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {lastEvaluation.details.mispronouncedWords.length > 0 && (
+                <div className="error-section mispronounced-words">
+                  <h5>Mispronounced Words:</h5>
+                  <ul>
+                    {lastEvaluation.details.mispronouncedWords.map((item, i) => (
+                      <li key={i}>
+                        <strong>{item.word}</strong> → <span className="attempted">{item.attempted}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="navigation-controls">
+        <button 
+          onClick={handleNextPhrase}
+          disabled={listening}
+          className={`next-button ${completedPhrases.size >= currentPhrases.length - 1 ? 'complete-button' : ''}`}
+        >
+          {completedPhrases.size >= currentPhrases.length - 1 
+            ? "Complete Session" 
+            : "Next Phrase"}
+        </button>
       </div>
-    </Router>
+    </div>
   );
 };
 
