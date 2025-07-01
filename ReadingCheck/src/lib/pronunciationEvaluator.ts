@@ -1,4 +1,4 @@
-import { compareTwoStrings } from 'string-similarity';
+import compareTwoStrings from 'string-similarity-js';
 import levenshtein from 'fast-levenshtein';
 import { dictionary as cmudict } from 'cmu-pronouncing-dictionary';
 import type { Phrase } from '../constants/phrases';

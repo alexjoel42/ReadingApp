@@ -1,8 +1,19 @@
 // src/constants/phrases.ts
 
-// Organized by phonetic progression
+export type Phrase = {
+  id: string;
+  text: string;
+  sightWords: string[];
+  phoneticPatterns: string[];
+};
+
+export type PhraseSet = {
+  id: string;
+  focus: string;
+  phrases: Phrase[];
+};
+
 export const PHRASE_SETS = [
-  // Set 1: CVC Words + Basic Sight Words
   {
     id: 'set-1',
     focus: "CVC Words & Basic Sight Words",
@@ -19,7 +30,6 @@ export const PHRASE_SETS = [
       { id: 'p1-10', text: "Hope shines bright", sightWords: ["hope"], phoneticPatterns: ["h-ow-p", "sh-ie-n-z", "b-r-ie-t"] }
     ]
   },
-  // Set 2: Digraphs/Blends + Expanded Vocabulary
   {
     id: 'set-2',
     focus: "Digraphs & Blends",
@@ -30,10 +40,5 @@ export const PHRASE_SETS = [
       { id: 'p2-4', text: "Which path to choose", sightWords: ["which", "to"], phoneticPatterns: ["w-ih-ch", "p-ae-th", "t-oo", "ch-oo-z"] },
       { id: 'p2-5', text: "Through thick and thin", sightWords: ["and"], phoneticPatterns: ["th-r-oo", "th-ih-k", "ae-n-d", "th-ih-n"] }
     ]
-  },
-  // Add more sets as needed...
-] as const;
-
-export type PhraseSet = typeof PHRASE_SETS[number];
-export type Phrase = PhraseSet['phrases'][number];
-
+  }
+] satisfies readonly PhraseSet[];

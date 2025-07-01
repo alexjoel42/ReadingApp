@@ -10,7 +10,7 @@ import type { Phrase } from './constants/phrases';
 import { PHRASE_SETS } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 import PhraseCard from './practice/PhraseCard';
-import RecordingControls from './practice/ReadingControls.tsx'; // Adjust this path if necessary
+import RecordingControls from './practice/ReadingControls'; 
 
 
 const App: React.FC = () => {
