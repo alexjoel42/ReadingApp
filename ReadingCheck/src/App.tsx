@@ -6,7 +6,7 @@ import StudentIdForm from './components/StudentIdForm';
 import TeacherDashboard from './components/TeacherDashboard';
 import type { Attempt } from './model';
 import './App.css';
-import type { Phrase } from './constants/phrases';
+import type { Phrase} from './constants/phrases';
 import { PHRASE_SETS } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 import PhraseCard from './practice/PhraseCard';
@@ -35,7 +35,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <Router>
+    <Router basename="/"> {/* <-- Your edit is HERE */}
       <div className="app">
         <header className="app-header">
           <Link to="/" className="app-logo">Reading Coach</Link>
@@ -136,7 +136,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
     resetTranscript();
     setLastEvaluation(null);
     setStartTime(Date.now());
-    
+
     console.log('Attempting to start recording...');
     try {
       // SpeechRecognition.startListening can return a Promise,
@@ -165,7 +165,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       else {
         errorMessage += ` (Error: ${error.message || 'Unknown error'})`;
       }
-      
+
       setRecordingError(errorMessage);
       setStartTime(null); // Reset start time if recording failed to start
     }
@@ -192,7 +192,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
         setRecordingError('Failed to stop recording cleanly. Please reload the page if issues persist.');
         // Don't return here, still attempt to process transcript if any
     }
-   
+
     const durationMs = Date.now() - startTime;
     const currentPhrase = currentPhrases[currentPhraseIndex];
 
