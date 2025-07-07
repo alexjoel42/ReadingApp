@@ -1,5 +1,5 @@
 // src/components/ProgressReport.tsx
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { PHRASE_SETS, type Phrase } from '../constants/phrases';
 import { evaluatePronunciation } from '../lib/pronunciationEvaluator';
 import { getStudentProgress, getPhraseById } from '../storage';
@@ -19,7 +19,7 @@ interface AttemptData {
   phraseCount: number;
   validAttempts: number; // Track how many attempts had valid evaluation data
 }
-
+/*
 interface ProgressMetric {
   attemptNumber: number;
   overallAccuracy: number;
@@ -30,7 +30,7 @@ interface ProgressMetric {
   topPhoneticPatternErrors: string;
   completionRate: string; // New metric for completion
 }
-
+*/
 export const ProgressReport = ({ studentId }: ProgressReportProps) => {
   const progress = getStudentProgress(studentId);
   const currentSet = PHRASE_SETS[progress?.currentSet || 0];

@@ -2,7 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StudentIdForm from './components/StudentIdForm';
-import { describe, test, expect, vi } from 'vitest';
+import {test, expect, vi } from 'vitest';
 test('StudentIdForm accepts input', async () => {
   const mockSubmit = vi.fn();
   render(<StudentIdForm onStudentIdSet={mockSubmit} />);

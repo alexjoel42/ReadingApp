@@ -1,4 +1,5 @@
 // src/components/LoginForm.tsx
+/*
 import { Box, Input, Button, VStack, Heading, Text } from '@chakra-ui/react';
 
 export const LoginForm = () => (
@@ -10,14 +11,12 @@ export const LoginForm = () => (
     borderWidth="1px"
     borderColor="gray.200"
   >
-    <VStack spacing={6} align="stretch">
-      {/* Header */}
+    <VStack spacing="6" align="stretch">
       <Box textAlign="center">
         <Heading size="md">Speech Coach</Heading>
         <Text color="gray.600">Teacher Dashboard</Text>
       </Box>
 
-      {/* Input Field */}
       <Box>
         <Text mb={2}>Student ID</Text>
         <Input 
@@ -26,8 +25,6 @@ export const LoginForm = () => (
           _placeholder={{ color: 'gray.400' }}
         />
       </Box>
-
-      {/* Button */}
       <Button 
         colorScheme="blue"
         size="lg"
@@ -35,10 +32,12 @@ export const LoginForm = () => (
         Start Session
       </Button>
 
-      {/* Footer */}
+
       <Text textAlign="center" color="gray.500">
         localhost:5173
       </Text>
     </VStack>
   </Box>
 );
+
+*/

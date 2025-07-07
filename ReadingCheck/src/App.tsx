@@ -10,13 +10,13 @@ import type { Phrase } from './constants/phrases';
 import { PHRASE_SETS } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 import PhraseCard from './practice/PhraseCard';
-import RecordingControls from './practice/ReadingControls'; 
+import RecordingControls from './practice/ReadingControls';
 
 
 const App: React.FC = () => {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
-  
+
   // Speech recognition hook remains in App.tsx since it's used across components
   const {
     transcript,
@@ -30,7 +30,8 @@ const App: React.FC = () => {
   }, []);
 
   if (!browserSupportsSpeechRecognition) {
-    return <div className="error">Your browser doesn't support speech recognition.</div>;
+    // This is already a good message for basic support
+    return <div className="error">Your browser doesn't support speech recognition. Please try Chrome or Edge.</div>;
   }
 
   return (
@@ -47,7 +48,7 @@ const App: React.FC = () => {
             !studentId ? (
               <StudentIdForm onStudentIdSet={setStudentId} />
             ) : (
-              <PracticeSession 
+              <PracticeSession
                 studentId={studentId}
                 transcript={transcript}
                 listening={listening}
@@ -59,9 +60,9 @@ const App: React.FC = () => {
           } />
 
           <Route path="/history" element={
-            <TeacherDashboard 
-              attempts={attempts} 
-              onAttemptsUpdate={() => setAttempts(getAttemptHistory())} 
+            <TeacherDashboard
+              attempts={attempts}
+              onAttemptsUpdate={() => setAttempts(getAttemptHistory())}
             />
           } />
         </Routes>
@@ -94,11 +95,15 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [lastEvaluation, setLastEvaluation] = useState<ReturnType<typeof evaluatePronunciation> | null>(null);
   const [currentPhrases, setCurrentPhrases] = useState<Phrase[]>([]);
 
+  // State to hold potential error messages for the user
+  const [recordingError, setRecordingError] = useState<string | null>(null);
+
+
   // Get assessment set based on student progress
   const getAssessmentSet = (studentId: string) => {
     const progress = getStudentProgress(studentId);
     const currentSet = PHRASE_SETS[progress.currentSet].phrases;
-    
+
     return [...currentSet]
       .sort(() => 0.5 - Math.random())
       .slice(0, 10);
@@ -111,20 +116,83 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
     setCompletedPhrases(new Set());
     resetTranscript();
     setLastEvaluation(null);
+    setRecordingError(null); // Clear error on new session/phrase set
   }, [studentId, resetTranscript]);
 
-  const handleStartRecording = () => {
-    if (currentPhrases.length === 0 || listening) return;
+  const handleStartRecording = async () => { // Make it async to handle promises from SpeechRecognition.startListening
+    setRecordingError(null); // Clear any previous error messages
+
+    if (currentPhrases.length === 0) {
+      console.error('Recording Error: No phrases loaded to practice.');
+      setRecordingError('Cannot start recording: No phrases loaded yet.');
+      return;
+    }
+    if (listening) {
+      console.warn('Recording Warning: Already listening, ignoring start request.');
+      // No need to set an error, but good to log for debugging
+      return;
+    }
+
     resetTranscript();
     setLastEvaluation(null);
     setStartTime(Date.now());
-    SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+    
+    console.log('Attempting to start recording...');
+    try {
+      // SpeechRecognition.startListening can return a Promise,
+      // or simply initiate the process. A try/catch is good practice.
+      await SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+      console.log('Speech recognition started successfully.');
+    } catch (error: any) { // Catching 'any' is common for browser APIs that might throw various error types
+      console.error('Failed to start speech recognition:', error);
+
+      let errorMessage = 'Failed to start recording. Please check your microphone.';
+
+      // Check for common error types/messages
+      if (error instanceof DOMException) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+        } else if (error.name === 'AbortError' || error.name === 'SecurityError') {
+          errorMessage = 'Recording was stopped or blocked. Ensure no other applications are using the microphone, or try reloading.';
+        } else if (error.name === 'NetworkError') {
+          errorMessage = 'A network error occurred during speech recognition. Check your internet connection.';
+        }
+        // Other DOMException names exist, but these are most common for media issues
+      } else if (error && typeof error.message === 'string' && error.message.includes('permission')) {
+          errorMessage = 'Microphone permission required. Please grant access in your browser.';
+      }
+      // General fallback for unknown errors
+      else {
+        errorMessage += ` (Error: ${error.message || 'Unknown error'})`;
+      }
+      
+      setRecordingError(errorMessage);
+      setStartTime(null); // Reset start time if recording failed to start
+    }
   };
 
   const handleStopRecording = () => {
-    if (!startTime || currentPhrases.length === 0 || !listening) return;
+    if (!startTime || currentPhrases.length === 0) {
+      console.warn('Recording Warning: Attempted to stop recording when not active or no phrases loaded.');
+      return;
+    }
+    if (!listening) {
+        console.warn('Recording Warning: Attempted to stop recording, but speech recognition was not active.');
+        // This can happen if startListening failed silently or was interrupted
+        setStartTime(null); // Ensure startTime is null if listening isn't true
+        setRecordingError('Recording was not active or was interrupted. Please try again.');
+        return;
+    }
 
-    SpeechRecognition.stopListening();
+    try {
+        SpeechRecognition.stopListening();
+        console.log('Speech recognition stopped successfully.');
+    } catch (error: any) {
+        console.error('Failed to stop speech recognition:', error);
+        setRecordingError('Failed to stop recording cleanly. Please reload the page if issues persist.');
+        // Don't return here, still attempt to process transcript if any
+    }
+   
     const durationMs = Date.now() - startTime;
     const currentPhrase = currentPhrases[currentPhraseIndex];
 
@@ -160,7 +228,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const handleNextPhrase = () => {
     if (currentPhrases.length === 0 || listening) return;
-    
+
     const updatedCompleted = new Set(completedPhrases).add(currentPhrases[currentPhraseIndex].id);
     setCompletedPhrases(updatedCompleted);
 
@@ -177,6 +245,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
     setCurrentPhraseIndex(nextIndex);
     resetTranscript();
     setLastEvaluation(null);
+    setRecordingError(null); // Clear error when moving to next phrase
   };
 
   if (currentPhrases.length === 0) {
@@ -185,57 +254,64 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   return (
     <div className="practice-interface">
-      <PhraseCard 
+      <PhraseCard
         phrase={currentPhrases[currentPhraseIndex]}
         currentIndex={currentPhraseIndex}
         totalPhrases={currentPhrases.length}
       />
-      
-      <RecordingControls 
+
+      <RecordingControls
         listening={listening}
         startTime={startTime}
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
       />
 
+      {recordingError && (
+        <div className="error-message">
+          <p>{recordingError}</p>
+          <p>Please ensure your microphone is connected and allowed by the browser.</p>
+        </div>
+      )}
+
       {transcript && (
         <div className="attempt-result">
           <h3>Your attempt:</h3>
           <p className="attempted-phrase">"{transcript}"</p>
-          
+
           {lastEvaluation && (
             <div className="analysis-results">
               <h4>Analysis:</h4>
               <div className="feedback-message">{lastEvaluation.feedback}</div>
-              
+
               <div className="score-breakdown">
                 <div className="score-meter">
                   <span>Overall Accuracy: </span>
                   <div className="meter-container">
-                    <div 
-                      className="meter-fill overall" 
+                    <div
+                      className="meter-fill overall"
                       style={{ width: `${lastEvaluation.score.overall}%` }}
                     />
                     <span className="score-value">{lastEvaluation.score.overall}%</span>
                   </div>
                 </div>
-                
+
                 <div className="score-meter">
                   <span>Sight Words: </span>
                   <div className="meter-container">
-                    <div 
-                      className="meter-fill sight-words" 
+                    <div
+                      className="meter-fill sight-words"
                       style={{ width: `${lastEvaluation.score.sightWords}%` }}
                     />
                     <span className="score-value">{lastEvaluation.score.sightWords}%</span>
                   </div>
                 </div>
-                
+
                 <div className="score-meter">
                   <span>Phonetics: </span>
                   <div className="meter-container">
-                    <div 
-                      className="meter-fill phonetics" 
+                    <div
+                      className="meter-fill phonetics"
                       style={{ width: `${lastEvaluation.score.phoneticPatterns}%` }}
                     />
                     <span className="score-value">{lastEvaluation.score.phoneticPatterns}%</span>
@@ -253,7 +329,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
                   </div>
                 </div>
               )}
-              
+
               {lastEvaluation.details.mispronouncedWords.length > 0 && (
                 <div className="error-section mispronounced-words">
                   <h5>Mispronounced Words:</h5>
@@ -272,13 +348,13 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       )}
 
       <div className="navigation-controls">
-        <button 
+        <button
           onClick={handleNextPhrase}
           disabled={listening}
           className={`next-button ${completedPhrases.size >= currentPhrases.length - 1 ? 'complete-button' : ''}`}
         >
-          {completedPhrases.size >= currentPhrases.length - 1 
-            ? "Complete Session" 
+          {completedPhrases.size >= currentPhrases.length - 1
+            ? "Complete Session"
             : "Next Phrase"}
         </button>
       </div>

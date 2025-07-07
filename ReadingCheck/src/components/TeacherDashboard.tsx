@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import HistoryTable_Overview from './HistoryTableOverview';
 import HistoryTable_Details from './HistoryTable_Details';
 import { deleteAttempt } from '../storage';
-import type { Attempt, TeacherDashboardProps } from '../model';
+import type {TeacherDashboardProps } from '../model';
 import { STORAGE_KEY } from '../model';
 import { ProgressReport } from './ProgressReport';
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ 
+const TeacherDashboard = ({ 
   attempts, 
   onAttemptsUpdate 
-}) => {
+}: TeacherDashboardProps): React.ReactElement => {
   const students = [...new Set(attempts.map(a => a.studentId))];
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
