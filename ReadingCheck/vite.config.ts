@@ -1,19 +1,27 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      strategies: 'generateSW', // Changed from injectManifest
+      includeAssets: [
+        'favicon.ico',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png'
+      ],
       manifest: {
         name: 'ReadingCheck',
         short_name: 'ReadCheck',
         description: 'Your reading companion app',
         theme_color: '#4f46e5',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
         icons: [
           {
             src: '/pwa-192x192.png',
@@ -29,11 +37,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // --- THIS IS THE ONLY CHANGE I'M MAKING TO YOUR PROVIDED CONFIG ---
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // Set to 6 MB (5.07 MB was your file size)
-        // Adjust this number if your main bundle size changes significantly.
-        // For example, if it grows to 7MB, set this to 8 * 1024 * 1024.
-        // -----------------------------------------------------------------
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
@@ -43,7 +47,7 @@ export default defineConfig({
               cacheName: 'google-fonts',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365
               }
             }
           },
@@ -55,7 +59,7 @@ export default defineConfig({
               networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
+                maxAgeSeconds: 60 * 5
               }
             }
           }
@@ -64,14 +68,12 @@ export default defineConfig({
         clientsClaim: true,
         cleanupOutdatedCaches: true
       },
-      filename:'service-worker.js',
-      injectRegister: 'auto',
-      includeManifestIcons: true,
       devOptions: {
         enabled: true,
         type: 'module',
         navigateFallback: 'index.html'
-      }
+      },
+      injectRegister: 'auto'
     })
   ],
   build: {
@@ -80,12 +82,18 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: './index.html'
+      },
+      output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]'
       }
     }
   },
   server: {
-    port: 3000,
-    open: true
+    port: 5173,
+    open: true,
+    strictPort: true
   },
   preview: {
     port: 3000,
@@ -94,6 +102,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': '/src'
+    }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.ts',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html']
     }
   }
 });
