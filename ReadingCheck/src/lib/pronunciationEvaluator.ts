@@ -1,6 +1,6 @@
 import compareTwoStrings from 'string-similarity-js';
 import levenshtein from 'fast-levenshtein';
-import { dictionary as cmudict } from 'cmu-pronouncing-dictionary';
+import cmudict from 'cmu-pronouncing-dictionary'; // This is the correct import for a default export
 import type { Phrase } from '../constants/phrases';
 
 // Audio analysis utilities

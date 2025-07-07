@@ -29,6 +29,11 @@ export default defineConfig({
         ]
       },
       workbox: {
+        // --- THIS IS THE ONLY CHANGE I'M MAKING TO YOUR PROVIDED CONFIG ---
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // Set to 6 MB (5.07 MB was your file size)
+        // Adjust this number if your main bundle size changes significantly.
+        // For example, if it grows to 7MB, set this to 8 * 1024 * 1024.
+        // -----------------------------------------------------------------
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
