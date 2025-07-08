@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base : '/',
+  base: process.env.NODE_ENV === 'production' ? '/ReadingCheck/' : '/',
   plugins: [
     react(),
     VitePWA({
@@ -80,7 +80,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    minify: 'esbuild',
+    minify: 'terser',
     terserOptions: {
       mangle: {
         reserved: [
