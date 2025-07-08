@@ -80,6 +80,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    minify: 'esbuild',
+    terserOptions: {
+      mangle: {
+        reserved: [
+          'NaN', // Prevent minifier from using 'NaN' as a variable name
+          'undefined', // Also good practice to reserve these
+          'Infinity'
+        ]
+      }
+    },
     rollupOptions: {
       input: {
         main: './index.html'
