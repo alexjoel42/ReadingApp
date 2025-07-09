@@ -38,8 +38,9 @@ const App: React.FC = () => {
     <Router basename="/"> {/* <-- Your edit is HERE */}
       <div className="app">
         <header className="app-header">
-          <Link to="/" className="app-logo">Reading Coach</Link>
+          <Link to="/" className="app-logo">ReadingFoundation</Link>
           <Link to="/history" className="teacher-link">Teacher Dashboard</Link>
+          <Link to="https://word-snake-sight-words.vercel.app/" className="Game">Practice Game</Link>
           {studentId && <span className="student-badge">Student: {studentId}</span>}
         </header>
 
