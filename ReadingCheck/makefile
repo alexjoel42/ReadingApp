@@ -35,10 +35,13 @@ test: ## Run tests
 	@echo "🧪 Running tests..."
 	@cd ReadingCheck && npm test
 
-clean: ## Remove node_modules and build artifacts
+clean: ## Remove node_modules and build artifacts (cross-platform)
 	@echo "🧹 Cleaning up..."
-	@rm -rf node_modules
-	@cd ReadingCheck && rm -rf node_modules build
+ifeq ($(OS),Windows_NT)
+	@powershell -Command "Get-ChildItem -Directory -Recurse -Force -Include 'node_modules','build' | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+else
+	@find . -type d \( -name "node_modules" -o -name "build" \) -exec rm -rf {} + 2>/dev/null || true
+endif
 
 # ==============
 # Helper Targets

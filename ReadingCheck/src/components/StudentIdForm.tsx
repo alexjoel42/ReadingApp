@@ -1,17 +1,26 @@
 // src/components/StudentIdForm.tsx
 import React, { useState } from 'react';
 
-interface StudentIdFormProps {
-  onStudentIdSet: (id: string) => void;
+interface StudentData {
+  id: string;
+  level: number; // 1 for k-set, 2 for g1-set, 3 for g2-set
 }
 
-const StudentIdForm: React.FC<StudentIdFormProps> = ({ onStudentIdSet }) => {
+interface StudentIdFormProps {
+  onStudentDataSet: (data: StudentData) => void;
+}
+
+const StudentIdForm: React.FC<StudentIdFormProps> = ({ onStudentDataSet }) => {
   const [studentId, setStudentId] = useState('');
+  const [level, setLevel] = useState<number>(1); // Default to Kindergarten
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (studentId.trim()) {
-      onStudentIdSet(studentId.trim());
+      onStudentDataSet({
+        id: studentId.trim(),
+        level: level
+      });
     }
   };
 
@@ -32,6 +41,43 @@ const StudentIdForm: React.FC<StudentIdFormProps> = ({ onStudentIdSet }) => {
             placeholder="Enter your student ID"
           />
         </div>
+        
+        <div className="form-group">
+          <label>Grade Level:</label>
+          <div className="level-options">
+            <label>
+              <input
+                type="radio"
+                name="level"
+                value="1"
+                checked={level === 1}
+                onChange={() => setLevel(1)}
+              />
+              Level 1
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="level"
+                value="2"
+                checked={level === 2}
+                onChange={() => setLevel(2)}
+              />
+              Level 2
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="level"
+                value="3"
+                checked={level === 3}
+                onChange={() => setLevel(3)}
+              />
+              Level 3
+            </label>
+          </div>
+        </div>
+        
         <button type="submit" className="submit-button">
           Start Practice Session
         </button>

@@ -50,6 +50,23 @@ body {
   padding: 0 2rem;
 }
 
+.level-options {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.level-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.level-options input[type="radio"] {
+  margin: 0;
+}
+
 /* Header Styles - Enhanced */
 .app-header {
   position: fixed;
