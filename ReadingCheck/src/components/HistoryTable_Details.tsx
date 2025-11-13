@@ -38,6 +38,11 @@ const HistoryTable_Details: React.FC<HistoryTableDetailsProps> = ({ attempts }) 
               </span>
             </div>
             
+            <div className="analysis-section student-response">
+              <h5>Student Said:</h5>
+              <p className="attempted-phrase">"{attempt.attemptedPhrase}"</p>
+            </div>
+            
             <div className="analysis-section">
               <h5>Phonetic Patterns:</h5>
               <p>{getPhoneticPatterns(attempt)}</p>

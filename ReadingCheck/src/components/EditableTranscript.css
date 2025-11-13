@@ -1,0 +1,80 @@
+.editable-transcript {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  font: #212529;
+}
+
+.transcript-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  min-height: 2rem;
+}
+
+.word {
+  padding: 0.4rem 0.8rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #495057;
+  user-select: none;
+}
+
+.word:hover {
+  background: #e7f3ff;
+  border-color: #4285f4;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.word.edited {
+  background: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.word.edited:hover {
+  background: #ffe69c;
+  border-color: #ffb300;
+}
+
+.word-input {
+  padding: 0.4rem 0.8rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border: 2px solid #4285f4;
+  border-radius: 6px;
+  outline: none;
+  background: white;
+  color: #495057;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+  min-width: 60px;
+}
+
+.edit-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .word {
+    font-size: 1rem;
+    padding: 0.35rem 0.7rem;
+  }
+  
+  .word-input {
+    font-size: 1rem;
+  }
+}

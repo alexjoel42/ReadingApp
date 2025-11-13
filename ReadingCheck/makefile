@@ -21,19 +21,19 @@ setup: ## Install all dependencies and verify environment
 install: ## Install Node.js dependencies
 	@echo "📦 Installing dependencies..."
 	@npm install
-	@cd ReadingCheck && npm install
+	npm install
 
 build: ## Build the application
 	@echo "🔨 Building application..."
-	@cd ReadingCheck && npm run build
+	npm run build
 
 start: ## Start the development server
 	@echo "💡 Starting ReadingApp..."
-	@cd ReadingCheck && npm start
+	npm start
 
 test: ## Run tests
 	@echo "🧪 Running tests..."
-	@cd ReadingCheck && npm test
+	npm test
 
 clean: ## Remove node_modules and build artifacts (cross-platform)
 	@echo "🧹 Cleaning up..."
@@ -53,7 +53,7 @@ verify-node: ## Verify Node.js version
 
 verify: ## Verify installation
 	@echo "✅ Verifying installation..."
-	@cd ReadingCheck && npm ls --depth=0
+	npm ls --depth=0
 
 help: ## Show this help
 	@echo "📖 Available commands:"

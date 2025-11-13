@@ -1,9 +1,13 @@
+// ============================================================
+// FILE: App.tsx (with EditableTranscript integration)
+// ============================================================
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { saveAttempt, getAttemptHistory, recordAttempt, getStudentProgress } from './storage';
 import StudentIdForm from './components/StudentIdForm';
 import TeacherDashboard from './components/TeacherDashboard';
+import EditableTranscript from './components/EditableTranscript';
 import type { Attempt } from './model';
 import './App.css';
 import type { Phrase } from './constants/phrases';
@@ -12,10 +16,7 @@ import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 import PhraseCard from './practice/PhraseCard';
 import RecordingControls from './practice/ReadingControls';
 
-interface StudentData {
-  id: string;
-  level: number; // 1 = K, 2 = G1, 3 = G2
-}
+import type { StudentData } from './types/students';
 
 const App: React.FC = () => {
   const [studentData, setStudentData] = useState<StudentData | null>(null);
@@ -76,8 +77,7 @@ const App: React.FC = () => {
 };
 
 // ==============================================
-// PRACTICE SESSION COMPONENT
-// (could later move to practice/PracticeSession.tsx)
+// PracticeSession Component
 // ==============================================
 interface PracticeSessionProps {
   studentId: string;
@@ -101,14 +101,15 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [completedPhrases, setCompletedPhrases] = useState<Set<string>>(new Set());
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [lastEvaluation, setLastEvaluation] = useState<ReturnType<typeof evaluatePronunciation> | null>(null);
   const [currentPhrases, setCurrentPhrases] = useState<Phrase[]>([]);
   const [recordingError, setRecordingError] = useState<string | null>(null);
+  const [editedTranscript, setEditedTranscript] = useState<string>('');
+  const [recordingEndTime, setRecordingEndTime] = useState<number | null>(null);
+  const [hasBeenEdited, setHasBeenEdited] = useState(false);
+  const [isWarmingUp, setIsWarmingUp] = useState(false);
 
-  // ==============================================
-  // PHRASE SELECTION SERVICE
-  // (could later move to services/phraseService.ts)
-  // ==============================================
   const getAssessmentSet = (level: number, studentId: string): Phrase[] => {
     const levelIndex = Math.min(Math.max(level - 1, 0), PHRASE_SETS.length - 1);
     const phrases = PHRASE_SETS[levelIndex].phrases;
@@ -137,15 +138,19 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
     resetTranscript();
     setLastEvaluation(null);
     setRecordingError(null);
+    setEditedTranscript('');
 
     // (Future) could use getStudentProgress(studentId) here to auto-adjust level
     console.log("Student progress:", getStudentProgress(studentId));
   }, [studentId, level, resetTranscript]);
 
-  // ==============================================
-  // RECORDING HANDLERS
-  // (could later move to practice/recordingHandlers.ts)
-  // ==============================================
+  // Update editedTranscript whenever transcript changes, but don't overwrite manual edits
+  useEffect(() => {
+    if (!hasBeenEdited) {
+      setEditedTranscript(transcript);
+    }
+  }, [transcript, hasBeenEdited]);
+
   const handleStartRecording = async () => {
     setRecordingError(null);
 
@@ -153,14 +158,26 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       setRecordingError('Cannot start recording: No phrases loaded yet.');
       return;
     }
-    if (listening) return;
+    if (listening || isWarmingUp) return;
 
     resetTranscript();
     setLastEvaluation(null);
-    setStartTime(Date.now());
+    setEditedTranscript('');
+    setHasBeenEdited(false);
+    setRecordingEndTime(null);
+    setIsWarmingUp(true);
 
     try {
+      // Start the microphone
       await SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
+      
+      // Wait 500ms for microphone to warm up
+      setTimeout(() => {
+        // Now set the start time (for duration calculation)
+        setStartTime(Date.now());
+        setIsWarmingUp(false);
+      }, 500);
+      
     } catch (error: any) {
       let errorMessage = 'Failed to start recording. Please check your microphone.';
       if (error instanceof DOMException) {
@@ -172,6 +189,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       }
       setRecordingError(errorMessage);
       setStartTime(null);
+      setIsWarmingUp(false);
     }
   };
 
@@ -184,35 +202,55 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       setRecordingError('Failed to stop recording cleanly.');
     }
 
-    const durationMs = Date.now() - startTime;
-    const currentPhrase = currentPhrases[currentPhraseIndex];
-    const evaluation = evaluatePronunciation(currentPhrase, transcript);
-    setLastEvaluation(evaluation);
-
-    const newAttempt: Attempt = {
-      studentId,
-      phraseId: currentPhrase.id,
-      timestamp: new Date(),
-      durationMs,
-      targetPhrase: currentPhrase.text,
-      attemptedPhrase: transcript,
-      accuracy: evaluation.score.overall,
-      sightWordScore: evaluation.score.sightWords,
-      phoneticScore: evaluation.score.phoneticPatterns,
-      feedback: evaluation.feedback,
-      details: evaluation.details,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    };
-
-    saveAttempt(newAttempt);
-    recordAttempt(studentId, currentPhrase.id, evaluation.score.overall, transcript, durationMs);
-    onAttemptRecorded(newAttempt);
-    setStartTime(null);
+    // Capture the end time but don't evaluate yet
+    setRecordingEndTime(Date.now());
   };
 
   const handleNextPhrase = () => {
-    if (currentPhrases.length === 0 || listening) return;
+    if (currentPhrases.length === 0 || listening || isWarmingUp) return;
 
+    console.log('=== HANDLE NEXT PHRASE ===');
+    console.log('editedTranscript:', editedTranscript);
+    console.log('startTime:', startTime);
+    console.log('recordingEndTime:', recordingEndTime);
+    console.log('Condition check:', !!(editedTranscript && startTime && recordingEndTime));
+
+    // Only evaluate and save if there's an edited transcript and recording happened
+    if (editedTranscript && startTime && recordingEndTime) {
+      const durationMs = recordingEndTime - startTime;
+      const currentPhrase = currentPhrases[currentPhraseIndex];
+      
+      console.log('=== SAVING ATTEMPT ===');
+      console.log('Original transcript:', transcript);
+      console.log('Edited transcript:', editedTranscript);
+      console.log('Has been edited:', hasBeenEdited);
+      
+      const evaluation = evaluatePronunciation(currentPhrase, editedTranscript);
+      setLastEvaluation(evaluation);
+
+      const newAttempt: Attempt = {
+        studentId,
+        phraseId: currentPhrase.id,
+        timestamp: new Date(),
+        durationMs,
+        targetPhrase: currentPhrase.text,
+        attemptedPhrase: editedTranscript,
+        accuracy: evaluation.score.overall,
+        sightWordScore: evaluation.score.sightWords,
+        phoneticScore: evaluation.score.phoneticPatterns,
+        feedback: evaluation.feedback,
+        details: evaluation.details,
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      };
+
+      console.log('New attempt object:', newAttempt);
+
+      saveAttempt(newAttempt);
+      recordAttempt(studentId, currentPhrase.id, evaluation.score.overall, editedTranscript, durationMs);
+      onAttemptRecorded(newAttempt);
+    }
+
+    // Navigation logic
     const updatedCompleted = new Set(completedPhrases).add(currentPhrases[currentPhraseIndex].id);
     setCompletedPhrases(updatedCompleted);
 
@@ -230,6 +268,10 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
     resetTranscript();
     setLastEvaluation(null);
     setRecordingError(null);
+    setEditedTranscript('');
+    setHasBeenEdited(false);
+    setStartTime(null);
+    setRecordingEndTime(null);
   };
 
   if (currentPhrases.length === 0) {
@@ -245,7 +287,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       />
 
       <RecordingControls
-        listening={listening}
+        listening={listening || isWarmingUp}
         startTime={startTime}
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
@@ -258,25 +300,23 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
         </div>
       )}
 
-      {transcript && (
+      {editedTranscript && (
         <div className="attempt-result">
           <h3>Your attempt:</h3>
-          <p className="attempted-phrase">"{transcript}"</p>
-
-          {lastEvaluation && (
-            <div className="analysis-results">
-              <h4>Analysis:</h4>
-              <div className="feedback-message">{lastEvaluation.feedback}</div>
-              {/* Additional scoring display could go here */}
-            </div>
-          )}
+          <EditableTranscript
+            transcript={editedTranscript}
+            onTranscriptChange={(newTranscript) => {
+              setEditedTranscript(newTranscript);
+              setHasBeenEdited(true);
+            }}
+          />
         </div>
       )}
 
       <div className="navigation-controls">
         <button
           onClick={handleNextPhrase}
-          disabled={listening}
+          disabled={listening || isWarmingUp}
           className={`next-button ${completedPhrases.size >= currentPhrases.length - 1 ? 'complete-button' : ''}`}
         >
           {completedPhrases.size >= currentPhrases.length - 1

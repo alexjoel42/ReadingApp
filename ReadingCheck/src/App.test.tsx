@@ -22,5 +22,8 @@ test('StudentIdForm submits data', async () => {
     name: /start practice session/i 
   }));
   
-  expect(mockSubmit).toHaveBeenCalledWith('test123');
+  expect(mockSubmit).toHaveBeenCalledWith({
+  id: 'test123',
+  level: 1,
+});
 });
