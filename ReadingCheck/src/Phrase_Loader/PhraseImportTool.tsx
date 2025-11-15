@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { db } from '../db';
 import type { PhraseSet } from '../constants/phrases';
 import './PhraseImportTool.css';
@@ -125,13 +125,62 @@ const PhraseImportTool: React.FC = () => {
     const reader = new FileReader();
     reader.onload = async e => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet) as {
-          set_id?: string;
-          phrase_text?: string;
-        }[];
+        const rows: { set_id?: string; phrase_text?: string; }[] = [];
+        
+        // Handle CSV vs XLSX differently
+        if (file.name.endsWith('.csv')) {
+          // For CSV, parse as text with proper CSV handling
+          const text = e.target?.result as string;
+          const lines = text.split('\n').filter(line => line.trim());
+          
+          for (let i = 1; i < lines.length; i++) { // Skip header
+            const line = lines[i];
+            // Simple CSV parser that handles quoted values
+            const commaIndex = line.indexOf(',');
+            if (commaIndex === -1) continue;
+            
+            const set_id = line.substring(0, commaIndex).trim();
+            const phrase_text = line.substring(commaIndex + 1).trim();
+            
+            if (set_id && phrase_text) {
+              rows.push({ set_id, phrase_text });
+            }
+          }
+        } else {
+          // For Excel files
+          const workbook = new ExcelJS.Workbook();
+          await workbook.xlsx.load(e.target?.result as ArrayBuffer);
+          const sheet = workbook.worksheets[0];
+          
+          sheet.eachRow((row, rowNumber) => {
+            if (rowNumber === 1) return; // Skip header row
+            
+            const cell1 = row.getCell(1).value?.toString()?.trim() || '';
+            const cell2 = row.getCell(2).value?.toString()?.trim() || '';
+            
+            // Check if they put everything in one cell
+            if (cell1 && !cell2) {
+              // Try to split on first space or comma
+              const spaceIndex = cell1.indexOf(' ');
+              const commaIndex = cell1.indexOf(',');
+              const splitIndex = commaIndex > -1 ? commaIndex : spaceIndex;
+              
+              if (splitIndex > -1) {
+                const set_id = cell1.substring(0, splitIndex).trim();
+                const phrase_text = cell1.substring(splitIndex + 1).trim();
+                if (set_id && phrase_text) {
+                  rows.push({ set_id, phrase_text });
+                }
+              }
+            } else if (cell1 && cell2) {
+              // Normal two-cell format
+              rows.push({
+                set_id: cell1,
+                phrase_text: cell2
+              });
+            }
+          });
+        }
 
         const valid = rows.filter(r => r.set_id && r.phrase_text);
         const processed = valid.map(r => processPhrase(r.set_id!, r.phrase_text!));
@@ -168,7 +217,12 @@ const PhraseImportTool: React.FC = () => {
       }
     };
 
-    reader.readAsArrayBuffer(file);
+    // Read file based on type
+    if (file.name.endsWith('.csv')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
   };
 
   const downloadTemplate = () => {
@@ -227,9 +281,9 @@ Grade5,Curiosity leads to great discoveries`;
         </p>
 
         <p>
-          If you’re not sure how to format your file, click{' '}
-          <strong>“Download Template”</strong> to get a ready-made example. Then fill
-          in your phrases, save the file, and click <strong>“Choose File”</strong> to
+          If you're not sure how to format your file, click{' '}
+          <strong>"Download Template"</strong> to get a ready-made example. Then fill
+          in your phrases, save the file, and click <strong>"Choose File"</strong> to
           upload it.
         </p>
 

@@ -19,6 +19,8 @@
   "dependencies": {
     "@chakra-ui/react": "^3.21.1",
     "cmu-pronouncing-dictionary": "^1.0.0",
+    "dexie": "^4.2.1",
+    "exceljs": "^4.4.0",
     "fast-levenshtein": "^2.0.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
