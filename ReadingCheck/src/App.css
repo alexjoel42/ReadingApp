@@ -112,6 +112,18 @@ body {
   background: rgba(255,255,255,0.2);
 }
 
+.PhraseImportTool
+  {
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid white;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 1.1rem;
+    margin-left: 1.5rem;
+  }
+
 .student-badge {
   background: white;
   color: var(--primary);

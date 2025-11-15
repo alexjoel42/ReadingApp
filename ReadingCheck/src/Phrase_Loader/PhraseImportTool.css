@@ -1,0 +1,388 @@
+.phrase-import-tool {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
+.phrase-import-tool h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.phrase-import-tool .subtitle {
+  color: #666;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.phrase-import-tool code {
+  background: #f5f5f5;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.9em;
+  border: 1px solid #e1e1e1;
+}
+
+.phrase-import-tool .loading-message {
+  text-align: center;
+  padding: 1.5rem;
+  background: #e3f2fd;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  color: #1976d2;
+  font-weight: 500;
+  border: 1px solid #bbdefb;
+}
+
+.phrase-import-tool .upload-zone {
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  background: #fafafa;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.phrase-import-tool .upload-zone:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.phrase-import-tool .upload-zone.drag-over {
+  background: #e3f2fd;
+  border-color: #2196f3;
+}
+
+.phrase-import-tool .upload-button {
+  padding: 0.75rem 1.5rem;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 500;
+  transition: background 0.2s;
+  border: none;
+  font-size: 1rem;
+}
+
+.phrase-import-tool .upload-button:hover {
+  background: #0056b3;
+}
+
+.phrase-import-tool .upload-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.phrase-import-tool .upload-hint {
+  display: block;
+  margin-top: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.phrase-import-tool .template-button {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #ffc107;
+  color: black;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+  font-size: 1rem;
+}
+
+.phrase-import-tool .template-button:hover {
+  background: #ffb300;
+}
+
+.phrase-import-tool .processing-message {
+  margin-top: 1rem;
+  color: #007bff;
+  font-weight: 500;
+}
+
+.phrase-import-tool .error-box {
+  background: #fee;
+  border: 1px solid #fcc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  color: #c00;
+  font-weight: 500;
+}
+
+.phrase-import-tool .results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.phrase-import-tool .results-header h2 {
+  margin: 0;
+  color: #28a745;
+}
+
+.phrase-import-tool .action-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.phrase-import-tool .export-button {
+  padding: 0.75rem 1.5rem;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-size: 1rem;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.phrase-import-tool .export-button.primary {
+  background: #28a745;
+}
+
+.phrase-import-tool .export-button.primary:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.phrase-import-tool .export-button.secondary {
+  background: #17a2b8;
+}
+
+.phrase-import-tool .export-button.secondary:hover {
+  background: #138496;
+  transform: translateY(-1px);
+}
+
+.phrase-import-tool .preview-container {
+  max-height: 600px;
+  overflow: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+}
+
+.phrase-import-tool .phrase-card {
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s;
+}
+
+.phrase-import-tool .phrase-card:hover {
+  background: #f8f9fa;
+}
+
+.phrase-import-tool .phrase-card:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.phrase-import-tool .phrase-card:nth-child(even):hover {
+  background: #f1f1f1;
+}
+
+.phrase-import-tool .phrase-card:last-child {
+  border-bottom: none;
+}
+
+.phrase-import-tool .phrase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.phrase-import-tool .set-id {
+  background: #007bff;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.phrase-import-tool .issues-badge {
+  background: #ffc107;
+  color: black;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.phrase-import-tool .phrase-text {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.phrase-import-tool .phrase-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.phrase-import-tool .detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.phrase-import-tool .detail-label {
+  font-weight: 600;
+  min-width: 140px;
+  font-size: 0.9rem;
+}
+
+.phrase-import-tool .detail-label.sight-words {
+  color: #28a745;
+}
+
+.phrase-import-tool .detail-label.issues {
+  color: #dc3545;
+}
+
+.phrase-import-tool .detail-label.phonetic {
+  color: #6c757d;
+}
+
+.phrase-import-tool .detail-value {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.phrase-import-tool .phonetic-patterns {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.85rem;
+  color: #495057;
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+  line-height: 1.4;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .phrase-import-tool {
+    padding: 1rem;
+  }
+  
+  .phrase-import-tool .results-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .phrase-import-tool .action-buttons {
+    justify-content: stretch;
+  }
+  
+  .phrase-import-tool .export-button {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .phrase-import-tool .detail-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .phrase-import-tool .detail-label {
+    min-width: auto;
+  }
+}
+
+/* BUTTON GROUP WRAPPER */
+.phrase-import-tool .file-controls {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+/* UNIVERSAL BUTTON STYLING */
+.phrase-import-tool .btn {
+  padding: 0.85rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* FILE UPLOAD BUTTON */
+.phrase-import-tool .btn-upload {
+  background: #4a90e2;
+  color: white;
+}
+
+.phrase-import-tool .btn-upload:hover {
+  background: #357ac9;
+  transform: translateY(-1px);
+}
+
+.phrase-import-tool .btn-upload:disabled {
+  background: #9bbbd9;
+  cursor: not-allowed;
+}
+
+/* TEMPLATE DOWNLOAD BUTTON */
+.phrase-import-tool .btn-template {
+  background: #ffca28;
+  color: #3a2f00;
+}
+
+.phrase-import-tool .btn-template:hover {
+  background: #f5b91f;
+  transform: translateY(-1px);
+}
+
+/* ICONS IN BUTTONS (optional) */
+.phrase-import-tool .btn .icon {
+  font-size: 1.2rem;
+}
+
+.phrase-import-tool .import-explanation {
+  max-width: 700px;
+  margin: 1.5rem auto;
+  padding: 1.2rem 1.6rem;
+  background: #f7f9fc;
+  border: 1px solid #e3e7ee;
+  border-radius: 10px;
+  line-height: 1.55;
+  color: #333;
+}
+
+.phrase-import-tool .import-explanation h3 {
+  margin-top: 0;
+  margin-bottom: 0.6rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a2b45;
+}

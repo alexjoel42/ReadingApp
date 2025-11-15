@@ -1,88 +1,90 @@
 // src/components/StudentIdForm.tsx
-import React, { useState } from 'react';
-
-interface StudentData {
-  id: string;
-  level: number; // 1 for k-set, 2 for g1-set, 3 for g2-set
-}
+import React, { useState, useEffect } from 'react';
+import { getAllPhraseSets } from '../storage';
+import type { PhraseSet } from '../constants/phrases';
 
 interface StudentIdFormProps {
-  onStudentDataSet: (data: StudentData) => void;
+  onStudentDataSet: (data: { id: string; selectedSetId: string }) => void;
 }
 
 const StudentIdForm: React.FC<StudentIdFormProps> = ({ onStudentDataSet }) => {
   const [studentId, setStudentId] = useState('');
-  const [level, setLevel] = useState<number>(1); // Default to Kindergarten
+  const [selectedSetId, setSelectedSetId] = useState('');
+  const [phraseSets, setPhraseSets] = useState<PhraseSet[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load all phrase sets (static + imported)
+    const loadSets = async () => {
+      const sets = await getAllPhraseSets();
+      setPhraseSets(sets);
+      if (sets.length > 0 && !selectedSetId) {
+        setSelectedSetId(sets[0].id);
+      }
+      setLoading(false);
+    };
+    
+    loadSets();
+    
+    // Refresh every 2 seconds to catch new uploads
+    const interval = setInterval(loadSets, 2000);
+    return () => clearInterval(interval);
+  }, [selectedSetId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (studentId.trim()) {
+    if (studentId.trim() && selectedSetId) {
       onStudentDataSet({
         id: studentId.trim(),
-        level: level
+        selectedSetId
       });
     }
   };
 
+  if (loading) {
+    return (
+      <div className="student-form">
+        <p>Loading phrase sets...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="student-form-container">
-      <h2>Welcome to Speech Coach</h2>
-      <form onSubmit={handleSubmit} className="student-form">
-        <div className="form-group">
-          <label htmlFor="studentId">Student ID:</label>
-          <input
-            id="studentId"
-            type="text"
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            required
-            pattern="[A-Za-z0-9]+"
-            title="Letters and numbers only"
-            placeholder="Enter your student ID"
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>Grade Level:</label>
-          <div className="level-options">
-            <label>
-              <input
-                type="radio"
-                name="level"
-                value="1"
-                checked={level === 1}
-                onChange={() => setLevel(1)}
-              />
-              Level 1
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="level"
-                value="2"
-                checked={level === 2}
-                onChange={() => setLevel(2)}
-              />
-              Level 2
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="level"
-                value="3"
-                checked={level === 3}
-                onChange={() => setLevel(3)}
-              />
-              Level 3
-            </label>
-          </div>
-        </div>
-        
-        <button type="submit" className="submit-button">
-          Start Practice Session
-        </button>
-      </form>
-    </div>
+    <form className="student-form" onSubmit={handleSubmit}>
+      <h2>Reading Practice</h2>
+      
+      <div className="form-group">
+        <label htmlFor="studentId">Student Name:</label>
+        <input
+          id="studentId"
+          type="text"
+          value={studentId}
+          onChange={(e) => setStudentId(e.target.value)}
+          placeholder="Enter your name"
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="phraseSet">Practice Set:</label>
+        <select
+          id="phraseSet"
+          value={selectedSetId}
+          onChange={(e) => setSelectedSetId(e.target.value)}
+          required
+        >
+          {phraseSets.map((set) => (
+            <option key={set.id} value={set.id}>
+              {set.focus}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <button type="submit" className="start-button">
+        Start Practice
+      </button>
+    </form>
   );
 };
 

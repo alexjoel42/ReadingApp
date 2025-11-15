@@ -1,22 +1,23 @@
-// ============================================================
-// FILE: App.tsx (with EditableTranscript integration)
-// ============================================================
+// src/App.tsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { saveAttempt, getAttemptHistory, recordAttempt, getStudentProgress } from './storage';
+import { saveAttempt, getAttemptHistory, recordAttempt, getStudentProgress, getPhraseSetById } from './storage';
 import StudentIdForm from './components/StudentIdForm';
 import TeacherDashboard from './components/TeacherDashboard';
+import PhraseImportTool from './Phrase_Loader/PhraseImportTool';
 import EditableTranscript from './components/EditableTranscript';
 import type { Attempt } from './model';
-import './App.css';
 import type { Phrase } from './constants/phrases';
-import { PHRASE_SETS } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 import PhraseCard from './practice/PhraseCard';
 import RecordingControls from './practice/ReadingControls';
+import './App.css';
 
-import type { StudentData } from './types/students';
+interface StudentData {
+  id: string;
+  selectedSetId: string;
+}
 
 const App: React.FC = () => {
   const [studentData, setStudentData] = useState<StudentData | null>(null);
@@ -44,6 +45,7 @@ const App: React.FC = () => {
           <Link to="/" className="app-logo">ReadingFoundation</Link>
           <Link to="/history" className="teacher-link">Teacher Dashboard</Link>
           <Link to="https://word-snake-sight-words.vercel.app/" className="Game">Practice Game</Link>
+          <Link to="/PhraseLoader" className="PhraseImportTool">Phrase Import Tool</Link>
           {studentData?.id && <span className="student-badge">Student: {studentData.id}</span>}
         </header>
 
@@ -54,7 +56,7 @@ const App: React.FC = () => {
             ) : (
               <PracticeSession
                 studentId={studentData.id}
-                level={studentData.level}
+                selectedSetId={studentData.selectedSetId}
                 transcript={transcript}
                 listening={listening}
                 resetTranscript={resetTranscript}
@@ -70,6 +72,8 @@ const App: React.FC = () => {
               onAttemptsUpdate={() => setAttempts(getAttemptHistory())}
             />
           } />
+
+          <Route path="/PhraseLoader" element={<PhraseImportTool />} />
         </Routes>
       </div>
     </Router>
@@ -81,7 +85,7 @@ const App: React.FC = () => {
 // ==============================================
 interface PracticeSessionProps {
   studentId: string;
-  level: number;
+  selectedSetId: string;
   transcript: string;
   listening: boolean;
   resetTranscript: () => void;
@@ -91,7 +95,7 @@ interface PracticeSessionProps {
 
 const PracticeSession: React.FC<PracticeSessionProps> = ({
   studentId,
-  level,
+  selectedSetId,
   transcript,
   listening,
   resetTranscript,
@@ -110,9 +114,15 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [hasBeenEdited, setHasBeenEdited] = useState(false);
   const [isWarmingUp, setIsWarmingUp] = useState(false);
 
-  const getAssessmentSet = (level: number, studentId: string): Phrase[] => {
-    const levelIndex = Math.min(Math.max(level - 1, 0), PHRASE_SETS.length - 1);
-    const phrases = PHRASE_SETS[levelIndex].phrases;
+  const getAssessmentSet = async (selectedSetId: string, studentId: string): Promise<Phrase[]> => {
+    const selectedSet = await getPhraseSetById(selectedSetId);
+    
+    if (!selectedSet) {
+      console.warn(`Phrase set ${selectedSetId} not found`);
+      return [];
+    }
+
+    const phrases = selectedSet.phrases;
 
     // Seed shuffle with studentId so order is consistent
     let seed = studentId.split('').reduce((acc, char) => {
@@ -127,22 +137,25 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       [seededPhrases[i], seededPhrases[j]] = [seededPhrases[j], seededPhrases[i]];
     }
 
-    return seededPhrases.slice(0, 10); // first 10 for consistent set
+    return seededPhrases.slice(0, 10);
   };
 
   useEffect(() => {
-    const phrases = getAssessmentSet(level, studentId);
-    setCurrentPhrases(phrases);
-    setCurrentPhraseIndex(0);
-    setCompletedPhrases(new Set());
-    resetTranscript();
-    setLastEvaluation(null);
-    setRecordingError(null);
-    setEditedTranscript('');
+    const loadPhrases = async () => {
+      const phrases = await getAssessmentSet(selectedSetId, studentId);
+      setCurrentPhrases(phrases);
+      setCurrentPhraseIndex(0);
+      setCompletedPhrases(new Set());
+      resetTranscript();
+      setLastEvaluation(null);
+      setRecordingError(null);
+      setEditedTranscript('');
 
-    // (Future) could use getStudentProgress(studentId) here to auto-adjust level
-    console.log("Student progress:", getStudentProgress(studentId));
-  }, [studentId, level, resetTranscript]);
+      console.log("Student progress:", getStudentProgress(studentId));
+    };
+    
+    loadPhrases();
+  }, [studentId, selectedSetId, resetTranscript]);
 
   // Update editedTranscript whenever transcript changes, but don't overwrite manual edits
   useEffect(() => {
@@ -168,12 +181,9 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
     setIsWarmingUp(true);
 
     try {
-      // Start the microphone
       await SpeechRecognition.startListening({ continuous: true, language: 'en-US' });
       
-      // Wait 500ms for microphone to warm up
       setTimeout(() => {
-        // Now set the start time (for duration calculation)
         setStartTime(Date.now());
         setIsWarmingUp(false);
       }, 500);
@@ -202,18 +212,16 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       setRecordingError('Failed to stop recording cleanly.');
     }
 
-    // Capture the end time but don't evaluate yet
     setRecordingEndTime(Date.now());
   };
 
-  const handleNextPhrase = () => {
+  const handleNextPhrase = async () => {
     if (currentPhrases.length === 0 || listening || isWarmingUp) return;
 
     console.log('=== HANDLE NEXT PHRASE ===');
     console.log('editedTranscript:', editedTranscript);
     console.log('startTime:', startTime);
     console.log('recordingEndTime:', recordingEndTime);
-    console.log('Condition check:', !!(editedTranscript && startTime && recordingEndTime));
 
     // Only evaluate and save if there's an edited transcript and recording happened
     if (editedTranscript && startTime && recordingEndTime) {
@@ -246,7 +254,7 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       console.log('New attempt object:', newAttempt);
 
       saveAttempt(newAttempt);
-      recordAttempt(studentId, currentPhrase.id, evaluation.score.overall, editedTranscript, durationMs);
+      await recordAttempt(studentId, currentPhrase.id, evaluation.score.overall, editedTranscript, durationMs);
       onAttemptRecorded(newAttempt);
     }
 
