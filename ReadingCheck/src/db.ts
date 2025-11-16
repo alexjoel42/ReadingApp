@@ -42,16 +42,34 @@ export class ReadingAppDB extends Dexie {
 
 export const db = new ReadingAppDB();
 
-// Migration helper
-if (typeof window !== 'undefined') {
-  const DB_VERSION_KEY = 'readingapp_db_version';
+// Safe migration helper - runs after database is open
+const DB_VERSION_KEY = 'readingapp_db_version';
+
+async function runMigrationIfNeeded() {
+  if (typeof window === 'undefined') return;
+  
   const currentVersion = localStorage.getItem(DB_VERSION_KEY);
   
-  if (currentVersion !== '4') {
-    console.log('🔄 Upgrading database schema to version 4...');
-    db.delete().then(() => {
-      localStorage.setItem(DB_VERSION_KEY, '4');
-      console.log('✅ Database schema upgraded to version 4');
-    });
+  // If already on version 4, no migration needed
+  if (currentVersion === '4') return;
+  
+  console.log('🔄 Running database migration to version 4...');
+  
+  try {
+    // Database is already open and ready to use
+    // If you need to migrate old data, do it here
+    // For now, we just mark as migrated
+    
+    localStorage.setItem(DB_VERSION_KEY, '4');
+    console.log('✅ Database migration complete');
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
   }
+}
+
+// Run migration after database is ready
+if (typeof window !== 'undefined') {
+  db.open().then(() => {
+    runMigrationIfNeeded();
+  });
 }
