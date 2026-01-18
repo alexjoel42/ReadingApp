@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -12,11 +11,16 @@ import type { Phrase } from './constants/phrases';
 import { evaluatePronunciation } from './lib/pronunciationEvaluator';
 import PhraseCard from './practice/PhraseCard';
 import RecordingControls from './practice/ReadingControls';
+
+// IMPORT: This is your new component for the comprehension logic
+import ReadingQuestionInterface from './Reading_Comprehension/Reading_Question_Interface'; 
 import './App.css';
 
+// Updated interface to include the mode selected in StudentIdForm
 interface StudentData {
   id: string;
   selectedSetId: string;
+  mode: 'fluency' | 'comprehension';
 }
 
 const App: React.FC = () => {
@@ -46,14 +50,20 @@ const App: React.FC = () => {
           <Link to="/history" className="teacher-link">Teacher Dashboard</Link>
           <Link to="https://word-snake-sight-words.vercel.app/" className="Game">Practice Game</Link>
           <Link to="/PhraseLoader" className="PhraseImportTool">Phrase Import Tool</Link>
-          {studentData?.id && <span className="student-badge">Student: {studentData.id}</span>}
+          {studentData?.id && (
+            <span className="student-badge">
+              Student: {studentData.id} | {studentData.mode === 'fluency' ? '🗣️ Practice' : '🧠 Quiz'}
+            </span>
+          )}
         </header>
 
         <Routes>
           <Route path="/" element={
             !studentData ? (
+              // StudentIdForm now returns { id, selectedSetId, mode }
               <StudentIdForm onStudentDataSet={setStudentData} />
-            ) : (
+            ) : studentData.mode === 'fluency' ? (
+              /* FLOW 1: Standard Fluency Practice */
               <PracticeSession
                 studentId={studentData.id}
                 selectedSetId={studentData.selectedSetId}
@@ -62,6 +72,13 @@ const App: React.FC = () => {
                 resetTranscript={resetTranscript}
                 onSessionComplete={() => setStudentData(null)}
                 onAttemptRecorded={(newAttempt) => setAttempts(prev => [newAttempt, ...prev])}
+              />
+            ) : (
+              /* FLOW 2: Reading Comprehension */
+              <ReadingQuestionInterface
+                studentId={studentData.id}
+                selectedSetId={studentData.selectedSetId}
+                onSessionComplete={() => setStudentData(null)}
               />
             )
           } />
@@ -81,7 +98,7 @@ const App: React.FC = () => {
 };
 
 // ==============================================
-// PracticeSession Component
+// PracticeSession Component (Standard Fluency)
 // ==============================================
 interface PracticeSessionProps {
   studentId: string;
@@ -105,7 +122,6 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [startTime, setStartTime] = useState<number | null>(null);
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [completedPhrases, setCompletedPhrases] = useState<Set<string>>(new Set());
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [lastEvaluation, setLastEvaluation] = useState<ReturnType<typeof evaluatePronunciation> | null>(null);
   const [currentPhrases, setCurrentPhrases] = useState<Phrase[]>([]);
   const [recordingError, setRecordingError] = useState<string | null>(null);
@@ -124,7 +140,6 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
 
     const phrases = selectedSet.phrases;
 
-    // Seed shuffle with studentId so order is consistent
     let seed = studentId.split('').reduce((acc, char) => {
       return (acc << 5) - acc + char.charCodeAt(0);
     }, 0);
@@ -157,7 +172,6 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
     loadPhrases();
   }, [studentId, selectedSetId, resetTranscript]);
 
-  // Update editedTranscript whenever transcript changes, but don't overwrite manual edits
   useEffect(() => {
     if (!hasBeenEdited) {
       setEditedTranscript(transcript);
@@ -166,7 +180,6 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const handleStartRecording = async () => {
     setRecordingError(null);
-
     if (currentPhrases.length === 0) {
       setRecordingError('Cannot start recording: No phrases loaded yet.');
       return;
@@ -193,8 +206,6 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       if (error instanceof DOMException) {
         if (error.name === 'NotAllowedError') {
           errorMessage = 'Microphone access denied. Please allow microphone access.';
-        } else if (error.name === 'AbortError' || error.name === 'SecurityError') {
-          errorMessage = 'Recording was stopped or blocked. Try reloading.';
         }
       }
       setRecordingError(errorMessage);
@@ -205,33 +216,20 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const handleStopRecording = () => {
     if (!startTime || currentPhrases.length === 0 || !listening) return;
-
     try {
       SpeechRecognition.stopListening();
     } catch {
       setRecordingError('Failed to stop recording cleanly.');
     }
-
     setRecordingEndTime(Date.now());
   };
 
   const handleNextPhrase = async () => {
     if (currentPhrases.length === 0 || listening || isWarmingUp) return;
 
-    console.log('=== HANDLE NEXT PHRASE ===');
-    console.log('editedTranscript:', editedTranscript);
-    console.log('startTime:', startTime);
-    console.log('recordingEndTime:', recordingEndTime);
-
-    // Only evaluate and save if there's an edited transcript and recording happened
     if (editedTranscript && startTime && recordingEndTime) {
       const durationMs = recordingEndTime - startTime;
       const currentPhrase = currentPhrases[currentPhraseIndex];
-      
-      console.log('=== SAVING ATTEMPT ===');
-      console.log('Original transcript:', transcript);
-      console.log('Edited transcript:', editedTranscript);
-      console.log('Has been edited:', hasBeenEdited);
       
       const evaluation = evaluatePronunciation(currentPhrase, editedTranscript);
       setLastEvaluation(evaluation);
@@ -251,14 +249,11 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       };
 
-      console.log('New attempt object:', newAttempt);
-
       saveAttempt(newAttempt);
       await recordAttempt(studentId, currentPhrase.id, evaluation.score.overall, editedTranscript, durationMs);
       onAttemptRecorded(newAttempt);
     }
 
-    // Navigation logic
     const updatedCompleted = new Set(completedPhrases).add(currentPhrases[currentPhraseIndex].id);
     setCompletedPhrases(updatedCompleted);
 
@@ -304,7 +299,6 @@ const PracticeSession: React.FC<PracticeSessionProps> = ({
       {recordingError && (
         <div className="error-message">
           <p>{recordingError}</p>
-          <p>Please ensure your microphone is connected and allowed.</p>
         </div>
       )}
 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import HistoryTable_Overview from './HistoryTableOverview';
 import HistoryTable_Details from './HistoryTable_Details';
 import { deleteAttempt } from '../storage';
-import type {TeacherDashboardProps } from '../model';
+import type { TeacherDashboardProps } from '../model';
 import { STORAGE_KEY } from '../model';
 import { ProgressReport } from './ProgressReport';
 
@@ -14,13 +14,34 @@ const TeacherDashboard = ({
   const students = [...new Set(attempts.map(a => a.studentId))];
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
+  
+  /** * THE NEW FILTER MODE
+   * 'all'           -> Show everything
+   * 'fluency'       -> Standard K-2 reading (defaulting to anything NOT marked comprehension)
+   * 'comprehension' -> New 4th Grade quiz results only
+   */
+  const [filterMode, setFilterMode] = useState<'all' | 'fluency' | 'comprehension'>('all');
 
+  // RETAINED LOGIC: Filtered attempts now handles both Student ID and Type Mode
   const filteredAttempts = useMemo(() => {
-    return selectedStudent 
-      ? attempts.filter(a => a.studentId === selectedStudent)
-      : attempts;
-  }, [attempts, selectedStudent]);
+    let result = attempts;
 
+    // Filter by Student (Your original logic)
+    if (selectedStudent) {
+      result = result.filter(a => a.studentId === selectedStudent);
+    }
+
+    // Filter by Type (The new "Good Filter")
+    if (filterMode === 'fluency') {
+      result = result.filter(a => a.details?.type !== 'comprehension');
+    } else if (filterMode === 'comprehension') {
+      result = result.filter(a => a.details?.type === 'comprehension');
+    }
+
+    return result;
+  }, [attempts, selectedStudent, filterMode]);
+
+  // RETAINED LOGIC: Stat calculations stay identical but now react to the new filter
   const { averageAccuracy, sightWordMastery, phoneticMastery } = useMemo(() => {
     if (filteredAttempts.length === 0) {
       return { averageAccuracy: 0, sightWordMastery: 0, phoneticMastery: 0 };    
@@ -32,12 +53,13 @@ const TeacherDashboard = ({
     const count = filteredAttempts.length;
     
     return {
-      averageAccuracy: accuracySum/count,
-      sightWordMastery: sightWordSum/count,
-      phoneticMastery: phoneticSum/count
+      averageAccuracy: accuracySum / count,
+      sightWordMastery: sightWordSum / count,
+      phoneticMastery: phoneticSum / count
     };
   }, [filteredAttempts]);
 
+  // RETAINED LOGIC: Session deletion logic
   const handleDeleteSession = (sessionId: string) => {
     if (window.confirm('Delete this entire practice session?')) {
       const [studentId, dateStr] = sessionId.split('-');
@@ -60,23 +82,34 @@ const TeacherDashboard = ({
         <div className="dashboard-header">
           <h2>Class Progress</h2>
           <div className="dashboard-controls">
-            <Link to="/" className="back-button">
-              Back to Practice
-            </Link>
+            <Link to="/" className="back-button">Back to Practice</Link>
+            
+            {/* THE NEW FILTER UI */}
+            <div className="type-toggle-bar" style={{ display: 'flex', gap: '5px', margin: '0 15px' }}>
+              <button 
+                className={filterMode === 'all' ? 'active' : ''} 
+                onClick={() => setFilterMode('all')}
+              >All</button>
+              <button 
+                className={filterMode === 'fluency' ? 'active' : ''} 
+                onClick={() => setFilterMode('fluency')}
+              >🗣️ Fluency</button>
+              <button 
+                className={filterMode === 'comprehension' ? 'active' : ''} 
+                onClick={() => setFilterMode('comprehension')}
+              >🧠 Quiz</button>
+            </div>
+
             {attempts.length > 0 && (
               <div className="view-toggle">
                 <button
                   className={viewMode === 'overview' ? 'active' : ''}
                   onClick={() => setViewMode('overview')}
-                >
-                  Overview
-                </button>
+                >Overview</button>
                 <button
                   className={viewMode === 'detailed' ? 'active' : ''}
                   onClick={() => setViewMode('detailed')}
-                >
-                  Details
-                </button>
+                >Details</button>
               </div>
             )}
           </div>
@@ -86,17 +119,6 @@ const TeacherDashboard = ({
           <div className="empty-state">
             <h3>No attempts recorded yet</h3>
             <p>Students need to complete practice sessions to see data here.</p>
-            {process.env.NODE_ENV === 'development' && (
-              <button 
-                onClick={() => {
-                  localStorage.removeItem(STORAGE_KEY);
-                  onAttemptsUpdate();
-                }}
-                className="sample-data-button"
-              >
-                Generate Sample Data (Dev Only)
-              </button>
-            )}
           </div>
         ) : (
           <>
@@ -109,14 +131,19 @@ const TeacherDashboard = ({
                 <h3>Avg. Accuracy</h3>
                 <p>{averageAccuracy.toFixed(1)}%</p>
               </div>
-              <div className="stat-card">
-                <h3>Sight Words</h3>
-                <p>{sightWordMastery.toFixed(1)}%</p>
-              </div>
-              <div className="stat-card">
-                <h3>Phonetics</h3>
-                <p>{phoneticMastery.toFixed(1)}%</p>
-              </div>
+              {/* Only show mastery cards if not in comprehension mode */}
+              {filterMode !== 'comprehension' && (
+                <>
+                  <div className="stat-card">
+                    <h3>Sight Words</h3>
+                    <p>{sightWordMastery.toFixed(1)}%</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Phonetics</h3>
+                    <p>{phoneticMastery.toFixed(1)}%</p>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="student-filter">
@@ -126,9 +153,7 @@ const TeacherDashboard = ({
               >
                 <option value="">All Students</option>
                 {students.map(student => (
-                  <option key={student} value={student}>
-                    {student}
-                  </option>
+                  <option key={student} value={student}>{student}</option>
                 ))}
               </select>
             </div>

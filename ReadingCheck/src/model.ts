@@ -1,9 +1,37 @@
-// src/model.ts
+/**
+ * NEW: Structure for a 4th-grade level comprehension question
+ */
+export interface ComprehensionQuestion {
+  id: string;
+  question: string;
+  options: { 
+    a: string; 
+    b: string; 
+    c: string; 
+    d: string 
+  };
+  correctAnswer: 'a' | 'b' | 'c' | 'd';
+}
 
 /**
- * Represents a student's attempt at pronouncing a phrase
+ * Represents a practice phrase or reading passage.
+ * Uses optional fields to support both K-2 Phonics and 4th Grade Comprehension.
  */
-// src/model.ts
+export interface Phrase {
+  id: string;
+  text: string;
+  // Phonics Metadata (Optional for Comprehension Passages)
+  difficulty?: 'easy' | 'medium' | 'hard';
+  sightWords?: readonly string[]; 
+  phoneticPatterns?: readonly string[]; 
+  // Comprehension Metadata (Optional for Phonics Phrases)
+  title?: string; 
+  questions?: ComprehensionQuestion[]; 
+}
+
+/**
+ * Represents a student's attempt at a phrase or a quiz session
+ */
 export interface Attempt {
   id: string;
   studentId: string;
@@ -17,15 +45,27 @@ export interface Attempt {
   phoneticScore: number;
   feedback: string;
   details: {
-    missingWords: string[];
-    extraWords: string[];
-    mispronouncedWords: {
+    missingWords?: string[];
+    extraWords?: string[];
+    mispronouncedWords?: {
       word: string;
       attempted: string;
     }[];
-    sightWordAccuracy: Record<string, boolean>;
-    phoneticPatternAccuracy: Record<string, boolean>;
+    sightWordAccuracy?: Record<string, boolean>;
+    phoneticPatternAccuracy?: Record<string, boolean>;
+    // Allows for tracking 'comprehension' vs 'fluency' in the dashboard
+    type?: 'fluency' | 'comprehension';
+    quizResults?: any;
   };
+}
+
+/**
+ * Container for multiple phrases (e.g., a grade-level set)
+ */
+export interface PhraseSet {
+  id: string;
+  focus: string;
+  phrases: Phrase[];
 }
 
 export interface TeacherDashboardProps {
@@ -34,17 +74,6 @@ export interface TeacherDashboardProps {
 }
 
 export const STORAGE_KEY = `speechApp_attempts_v2`;
-
-/**
- * Represents a practice phrase with linguistic metadata
- */
-export interface Phrase {
-  id: string;
-  text: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  sightWords: readonly string[]; // Sight words contained in this phrase
-  phoneticPatterns?: readonly string[]; // Phonetic patterns in this phrase (optional)
-}
 
 /**
  * Type for the pronunciation evaluation results
